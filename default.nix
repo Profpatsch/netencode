@@ -28,8 +28,8 @@ let
       pkgs.haskellPackages.data-fix
       pkgs.haskellPackages.bytestring
       pkgs.haskellPackages.attoparsec
-      pkgs.haskellPackages.pa-prelude
       pkgs.haskellPackages.pa-label
+      depot.users.Profpatsch.my-prelude
       pkgs.haskellPackages.pa-error-tree
     ];
 

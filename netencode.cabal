@@ -60,8 +60,8 @@ library
 
     build-depends:
         base >=4.15 && <5,
-        pa-prelude,
         pa-label,
+        my-prelude,
         pa-error-tree,
         hedgehog,
         nonempty-containers,

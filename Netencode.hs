@@ -24,7 +24,7 @@ import GHC.Exts (fromString)
 import Hedgehog qualified as Hedge
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
-import PossehlAnalyticsPrelude
+import MyPrelude
 import Text.Show.Deriving
 import Prelude hiding (sum)
 
@@ -388,7 +388,7 @@ boundedDecimalFail =
     Just a -> pure a
 
 -- | Hedgehog generator for a netencode value.
-genNetencode :: Hedge.MonadGen m => m T
+genNetencode :: (Hedge.MonadGen m) => m T
 genNetencode =
   Gen.recursive
     Gen.choice
