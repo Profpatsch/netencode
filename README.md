@@ -124,6 +124,90 @@ it should also never parse anything longer than 1024 bytes for the value
 
 TODO
 
+## examples
+
+### Basic data types
+
+```
+# Unit (single value)
+u,
+
+# Booleans
+n1:0,  # false
+n1:1,  # true
+
+# Numbers
+n3:42,      # natural 42 (fits in 8 bits)
+i3:-42,     # integer -42 (fits in 8 bits)
+n6:1000000, # natural 1M (fits in 64 bits)
+i3:-1,      # integer -1 (fits in 8 bits)
+
+# Text (UTF-8)
+t5:hello,
+t11:hello world,
+t9:今日は,     # Japanese text (9 bytes in UTF-8)
+t0:,          # empty string
+
+# Binary data
+b4:test,        # 4 bytes
+b0:,            # empty binary
+```
+
+### Complex data structures
+
+```
+# Tagged values (sum types)
+<4:Some|t5:hello,    # Some("hello")
+<4:None|u,           # None
+<5:Error|t14:file not found,  # Error("file not found")
+
+# Records (like JSON objects or maps)
+{21:<3:foo|u,<1:x|t3:baz,}     # { foo: unit, x: "baz" }
+{28:<4:name|t3:Bob,<3:age|n3:42,}  # { name: "Bob", age: 42 }
+
+# Lists
+[0:]                    # empty list
+[7:t3:foo,]            # ["foo"]
+[14:t3:foo,i3:-42,]    # ["foo", -42]
+[35:<4:Some|t3:foo,<4:None|u,<4:None|u,]  # [Some("foo"), None, None]
+
+# Nested structures
+{55:<4:user|{29:<4:name|t4:Jane,<3:age|n3:30,}<5:items|[0:]}
+# { user: { name: "Jane", age: 30 }, items: [] }
+```
+
+### Real-world examples
+
+#### Configuration file
+```
+{104:<8:database|{37:<4:host|t9:localhost,<4:port|n5:5432,}<7:logging|{34:<5:level|t5:debug,<7:enabled|n1:1,}}
+```
+Represents:
+```json
+{
+  "database": {
+    "host": "localhost",
+    "port": 5432
+  },
+  "logging": {
+    "level": "debug",
+    "enabled": true
+  }
+}
+```
+
+#### API response
+```
+<7:success|{91:<4:data|[64:{28:<2:id|n3:1,<4:name|t5:Alice,}{26:<2:id|n3:2,<4:name|t3:Bob,}]<5:count|n3:2,}
+```
+Represents a successful API response with a list of users.
+
+#### Error handling
+```
+<5:error|{49:<4:code|n5:404,<7:message|t18:Resource not found,}
+```
+Represents an error with code and message.
+
 ## guarantees
 
 TODO: do I want unique representation (bijection like bencode?) This would put more restrictions on the generator, like sorting records in lexicographic order, but would make it possible to compare without decoding
