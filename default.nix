@@ -3,11 +3,11 @@
 let
   pkgs = import <nixpkgs> { };
   lib = pkgs.lib;
-  rust-writers = import ./rust-writers.nix { inherit pkgs lib drvSeqL; };
-  rust-crates = import ./rust-crates.nix { inherit pkgs lib; };
+  rust-writers = import ./nix-lib/rust-writers.nix { inherit pkgs lib drvSeqL; };
+  rust-crates = import ./nix-lib/rust-crates.nix { inherit pkgs lib; };
   exact-source = import ./exact-source.nix { inherit pkgs lib; };
   exec-helpers = import ./exec-helpers { inherit pkgs lib rust-writers; };
-  drvSeqL = import ./drvSeqL.nix { inherit pkgs lib; };
+  drvSeqL = import ./nix-lib/drvSeqL.nix { inherit pkgs lib; };
   arglib = import ./arglib/netencode.nix { inherit pkgs lib rust-writers exact-source exec-helpers gen netencode-rs; };
 
   netencode-rs = rust-writers.rustSimpleLib
