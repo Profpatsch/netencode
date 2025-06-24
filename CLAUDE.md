@@ -94,3 +94,24 @@ The `nix-shell` provides:
 - Zero-copy parsing support with borrowed types
 - Composable decoder framework for type-safe extraction
 - Integration with Unix tooling philosophy
+
+## Commit Message Format
+
+Use conventional commit format with these conventions:
+- Basic verbs: `feat`, `chore`, `doc`, `refact`
+- Always include scope in parentheses: `(scope)`
+- Add ✨ emoji after scope for AI-generated commits: `doc(meta): ✨ description`
+- Include detailed explanation in commit body
+- End with Claude Code attribution
+
+Example:
+```
+doc(meta): ✨ add CLAUDE.md for AI assistant guidance
+
+Analyzed codebase structure, build systems (Nix/Cabal/Cargo), and architecture
+to create comprehensive guidance file for Claude Code.
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
