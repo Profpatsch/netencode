@@ -1,0 +1,10 @@
+cradle:
+  cabal:
+    - path: "./arglib"
+      component: "lib:arglib-netencode"
+    - path: "."
+      component: "lib:netencode"
+    - path: "./exec-helpers"
+      component: "lib:exec-helpers"
+    - path: "./third-party/my-prelude"
+      component: "lib:my-prelude"

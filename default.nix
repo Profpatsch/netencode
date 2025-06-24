@@ -5,46 +5,47 @@ let
   lib = pkgs.lib;
   rust-writers = import ./nix-lib/rust-writers.nix { inherit pkgs lib drvSeqL; };
   rust-crates = import ./nix-lib/rust-crates.nix { inherit pkgs lib; };
-  exact-source = import ./exact-source.nix { inherit pkgs lib; };
-  exec-helpers = import ./exec-helpers { inherit pkgs lib rust-writers; };
+  exact-source = import ./nix-lib/exact-source.nix { inherit pkgs lib; };
+  exec-helpers = import ./exec-helpers/default.nix { inherit pkgs lib rust-writers exact-source; };
   drvSeqL = import ./nix-lib/drvSeqL.nix { inherit pkgs lib; };
-  arglib = import ./arglib/netencode.nix { inherit pkgs lib rust-writers exact-source exec-helpers gen netencode-rs; };
+  arglib = import ./arglib/netencode.nix { inherit pkgs lib rust-writers exact-source exec-helpers gen netencode-rs netencode-hs; };
+  my-prelude = import ./third-party/my-prelude/default.nix { inherit pkgs lib exact-source; };
 
   netencode-rs = rust-writers.rustSimpleLib
     {
       name = "netencode";
       dependencies = [
         rust-crates.nom
-        exec-helpers
+        exec-helpers.exec-helpers-rs
       ];
     }
     (builtins.readFile ./netencode.rs);
 
-  # netencode-hs = pkgs.haskellPackages.mkDerivation {
-  #   pname = "netencode";
-  #   version = "0.1.0";
+  netencode-hs = pkgs.haskellPackages.mkDerivation {
+    pname = "netencode";
+    version = "0.1.0";
 
-  #   src = exact-source ./. [
-  #     ./netencode.cabal
-  #     ./Netencode.hs
-  #     ./Netencode/Parse.hs
-  #   ];
+    src = exact-source ./. [
+      ./netencode.cabal
+      ./Netencode.hs
+      ./Netencode/Parse.hs
+    ];
 
-  #   libraryHaskellDepends = [
-  #     pkgs.haskellPackages.hedgehog
-  #     pkgs.haskellPackages.nonempty-containers
-  #     pkgs.haskellPackages.deriving-compat
-  #     pkgs.haskellPackages.data-fix
-  #     pkgs.haskellPackages.bytestring
-  #     pkgs.haskellPackages.attoparsec
-  #     pkgs.haskellPackages.pa-label
-  #     depot.users.Profpatsch.my-prelude
-  #     pkgs.haskellPackages.pa-error-tree
-  #   ];
+    libraryHaskellDepends = [
+      my-prelude
+      pkgs.haskellPackages.hedgehog
+      pkgs.haskellPackages.nonempty-containers
+      pkgs.haskellPackages.deriving-compat
+      pkgs.haskellPackages.data-fix
+      pkgs.haskellPackages.bytestring
+      pkgs.haskellPackages.attoparsec
+      pkgs.haskellPackages.pa-label
+      pkgs.haskellPackages.pa-error-tree
+    ];
 
-  #   isLibrary = true;
-  #   license = lib.licenses.mit;
-  # };
+    isLibrary = true;
+    license = lib.licenses.mit;
+  };
 
   gen = import ./gen.nix { inherit lib; };
 
@@ -63,7 +64,7 @@ let
       dependencies = [
         netencode-rs
         pretty-rs
-        exec-helpers
+        exec-helpers.exec-helpers-rs
       ];
     } ''
     extern crate netencode;
@@ -97,7 +98,7 @@ let
       name = "record-get";
       dependencies = [
         netencode-rs
-        exec-helpers
+        exec-helpers.exec-helpers-rs
       ];
     } ''
     extern crate netencode;
@@ -124,7 +125,7 @@ let
       name = "record-splice-env";
       dependencies = [
         netencode-rs
-        exec-helpers
+        exec-helpers.exec-helpers-rs
       ];
     } ''
     extern crate netencode;
@@ -153,7 +154,7 @@ let
       name = "env-splice-record";
       dependencies = [
         netencode-rs
-        exec-helpers
+        exec-helpers.exec-helpers-rs
       ];
     } ''
     extern crate netencode;
@@ -179,7 +180,7 @@ in
 {
   inherit
     netencode-rs
-    #netencode-hs
+    netencode-hs
     pretty-rs
     pretty
     netencode-mustache

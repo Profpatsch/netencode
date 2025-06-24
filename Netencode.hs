@@ -4,6 +4,7 @@
 
 module Netencode where
 
+import MyPrelude
 import Control.Applicative (many)
 import Data.Attoparsec.ByteString qualified as Atto
 import Data.Attoparsec.ByteString.Char8 qualified as Atto.Char
@@ -24,7 +25,6 @@ import GHC.Exts (fromString)
 import Hedgehog qualified as Hedge
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
-import MyPrelude
 import Text.Show.Deriving
 import Prelude hiding (sum)
 

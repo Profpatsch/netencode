@@ -1,0 +1,5 @@
+packages:
+  ./netencode.cabal
+  ./arglib/arglib-netencode.cabal
+  ./exec-helpers/exec-helpers.cabal
+  ./third-party/my-prelude/my-prelude.cabal

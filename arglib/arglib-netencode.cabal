@@ -57,8 +57,8 @@ library
 
     build-depends:
         base >=4.15 && <5,
-        pa-label,
         my-prelude,
+        pa-label,
         netencode,
         exec-helpers,
         attoparsec,

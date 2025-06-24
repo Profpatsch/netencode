@@ -60,7 +60,6 @@ library
 
     build-depends:
         base >=4.15 && <5,
-        pa-label,
         my-prelude,
         pa-error-tree,
         hedgehog,
@@ -68,7 +67,7 @@ library
         deriving-compat,
         data-fix,
         bytestring,
-        attoparsec,
         text,
+        attoparsec,
         semigroupoids,
         selective

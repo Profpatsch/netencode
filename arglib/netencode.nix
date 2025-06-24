@@ -1,4 +1,4 @@
-{ pkgs, lib, rust-writers, exact-source, gen, exec-helpers, netencode-rs, ... }:
+{ pkgs, lib, rust-writers, exact-source, gen, exec-helpers, netencode-rs, netencode-hs, ... }:
 
 let
 
@@ -14,7 +14,7 @@ let
     {
       name = "arglib-netencode";
       dependencies = [
-        exec-helpers
+        exec-helpers.exec-helpers-rs
         netencode-rs
       ];
     } ''
@@ -45,28 +45,27 @@ let
     }
   '';
 
-  # haskell = pkgs.haskellPackages.mkDerivation {
-  #   pname = "arglib-netencode";
-  #   version = "0.1.0";
+  haskell = pkgs.haskellPackages.mkDerivation {
+    pname = "arglib-netencode";
+    version = "0.1.0";
 
-  #   src = exact-source ./. [
-  #     ./arglib-netencode.cabal
-  #     ./ArglibNetencode.hs
-  #   ];
+    src = exact-source ./. [
+      ./arglib-netencode.cabal
+      ./ArglibNetencode.hs
+    ];
 
-  #   libraryHaskellDepends = [
-  #     pkgs.haskellPackages.pa-label
-  #     #depot.users.Profpatsch.my-prelude
-  #     pkgs.haskellPackages.pa-error-tree
-  #     netencode-hs
-  #     exec-helpers-hs
-  #   ];
+    libraryHaskellDepends = [
+      pkgs.haskellPackages.pa-label
+      pkgs.haskellPackages.pa-error-tree
+      netencode-hs
+      exec-helpers.exec-helpers-hs
+    ];
 
-  #   isLibrary = true;
-  #   license = lib.licenses.mit;
+    isLibrary = true;
+    license = lib.licenses.mit;
 
 
-  # };
+  };
 
 
 in
@@ -74,6 +73,6 @@ in
   inherit
     with-args
     rust
-    # haskell
+    haskell
     ;
 }
