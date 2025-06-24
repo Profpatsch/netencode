@@ -1,47 +1,54 @@
-{ depot, pkgs, lib, ... }:
+#{ depot, pkgs, lib, ... }:
 
 let
-  netencode-rs = depot.nix.writers.rustSimpleLib
+  pkgs = import <nixpkgs> { };
+  lib = pkgs.lib;
+  rust-writers = import ./rust-writers.nix { inherit pkgs lib drvSeqL; };
+  rust-crates = import ./rust-crates.nix { inherit pkgs lib; };
+  exact-source = import ./exact-source.nix { inherit pkgs lib; };
+  exec-helpers = import ./exec-helpers { inherit pkgs lib rust-writers; };
+  drvSeqL = import ./drvSeqL.nix { inherit pkgs lib; };
+  arglib = import ./arglib/netencode.nix { inherit pkgs lib rust-writers exact-source exec-helpers gen netencode-rs; };
+
+  netencode-rs = rust-writers.rustSimpleLib
     {
       name = "netencode";
       dependencies = [
-        depot.third_party.rust-crates.nom
-        depot.users.Profpatsch.execline.exec-helpers
+        rust-crates.nom
+        exec-helpers
       ];
     }
     (builtins.readFile ./netencode.rs);
 
-  netencode-hs = pkgs.haskellPackages.mkDerivation {
-    pname = "netencode";
-    version = "0.1.0";
+  # netencode-hs = pkgs.haskellPackages.mkDerivation {
+  #   pname = "netencode";
+  #   version = "0.1.0";
 
-    src = depot.users.Profpatsch.exactSource ./. [
-      ./netencode.cabal
-      ./Netencode.hs
-      ./Netencode/Parse.hs
-    ];
+  #   src = exact-source ./. [
+  #     ./netencode.cabal
+  #     ./Netencode.hs
+  #     ./Netencode/Parse.hs
+  #   ];
 
-    libraryHaskellDepends = [
-      pkgs.haskellPackages.hedgehog
-      pkgs.haskellPackages.nonempty-containers
-      pkgs.haskellPackages.deriving-compat
-      pkgs.haskellPackages.data-fix
-      pkgs.haskellPackages.bytestring
-      pkgs.haskellPackages.attoparsec
-      pkgs.haskellPackages.pa-label
-      depot.users.Profpatsch.my-prelude
-      pkgs.haskellPackages.pa-error-tree
-    ];
+  #   libraryHaskellDepends = [
+  #     pkgs.haskellPackages.hedgehog
+  #     pkgs.haskellPackages.nonempty-containers
+  #     pkgs.haskellPackages.deriving-compat
+  #     pkgs.haskellPackages.data-fix
+  #     pkgs.haskellPackages.bytestring
+  #     pkgs.haskellPackages.attoparsec
+  #     pkgs.haskellPackages.pa-label
+  #     depot.users.Profpatsch.my-prelude
+  #     pkgs.haskellPackages.pa-error-tree
+  #   ];
 
-    isLibrary = true;
-    license = lib.licenses.mit;
-
-
-  };
+  #   isLibrary = true;
+  #   license = lib.licenses.mit;
+  # };
 
   gen = import ./gen.nix { inherit lib; };
 
-  pretty-rs = depot.nix.writers.rustSimpleLib
+  pretty-rs = rust-writers.rustSimpleLib
     {
       name = "netencode-pretty";
       dependencies = [
@@ -50,13 +57,13 @@ let
     }
     (builtins.readFile ./pretty.rs);
 
-  pretty = depot.nix.writers.rustSimple
+  pretty = rust-writers.rustSimple
     {
       name = "netencode-pretty";
       dependencies = [
         netencode-rs
         pretty-rs
-        depot.users.Profpatsch.execline.exec-helpers
+        exec-helpers
       ];
     } ''
     extern crate netencode;
@@ -73,24 +80,24 @@ let
     }
   '';
 
-  netencode-mustache = depot.nix.writers.rustSimple
+  netencode-mustache = rust-writers.rustSimple
     {
       name = "netencode_mustache";
       dependencies = [
-        depot.users.Profpatsch.arglib.netencode.rust
+        arglib.rust
         netencode-rs
-        depot.third_party.rust-crates.mustache
+        rust-crates.mustache
       ];
     }
     (builtins.readFile ./netencode-mustache.rs);
 
 
-  record-get = depot.nix.writers.rustSimple
+  record-get = rust-writers.rustSimple
     {
       name = "record-get";
       dependencies = [
         netencode-rs
-        depot.users.Profpatsch.execline.exec-helpers
+        exec-helpers
       ];
     } ''
     extern crate netencode;
@@ -112,12 +119,12 @@ let
     }
   '';
 
-  record-splice-env = depot.nix.writers.rustSimple
+  record-splice-env = rust-writers.rustSimple
     {
       name = "record-splice-env";
       dependencies = [
         netencode-rs
-        depot.users.Profpatsch.execline.exec-helpers
+        exec-helpers
       ];
     } ''
     extern crate netencode;
@@ -141,12 +148,12 @@ let
     }
   '';
 
-  env-splice-record = depot.nix.writers.rustSimple
+  env-splice-record = rust-writers.rustSimple
     {
       name = "env-splice-record";
       dependencies = [
         netencode-rs
-        depot.users.Profpatsch.execline.exec-helpers
+        exec-helpers
       ];
     } ''
     extern crate netencode;
@@ -169,10 +176,10 @@ let
   '';
 
 in
-depot.nix.readTree.drvTargets {
+{
   inherit
     netencode-rs
-    netencode-hs
+    #netencode-hs
     pretty-rs
     pretty
     netencode-mustache
