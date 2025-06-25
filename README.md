@@ -17,28 +17,23 @@ The unit (`u`) has only one value.
 
 ### numbers
 
-Naturals (`n`) and Integers (`i`), with a maximum size in bits.
+Naturals (`n`) and Integers (`i`) are 64-bit values.
 
-Bit sizes are specified in 2^n increments, 1 to 9 (`n1`..`n9`, `i1`..`n9`).
 
-* Natural `1234` that fits in 32 bits (2^5): `n5:1234,`
-* Integer `-42` that fits in 8 bits (2^3): `i3:-42,`
-* Integer `23` that fits in 64 bits (2^6): `i6:23,`
-* Integer `-1` that fits in 512 bits (2^9): `i9:-1,`
-* Natural `0` that fits in 1 bit (2^1): `n1:0,`
+* Natural `1234`: `n:1234,`
+* Integer `-42`: `i:-42,`
+* Integer `23`: `i:23,`
+* Natural `0`: `n:0,`
 
-An implementation can define the biggest numbers it supports, and has to throw an error for anything bigger. It has to support everything smaller, so for example if you support up to i6/n6, you have to support 1–6 as well. An implementation could support up to the current architecture’s wordsize for example.
 
 Floats are not supported, you can implement fixed-size decimals or ratios using integers.
 
 ### booleans
 
-A boolean is represented as `n1`.
+Booleans are conventionally represented by the tagged unit values (see below for tags).
 
-* `n1:0,`: false
-* `n1:1,`: true
-
-TODO: should we add `f,` and `t,`?
+* `<5:false|u,`: false
+* `<4:true|u,`: true
 
 ### text
 
@@ -68,7 +63,7 @@ Use text (`t`) if you have utf-8 encoded data.
 A tag (`<`) gives a value a name. The tag is UTF-8 encoded, starting with its length in bytes and proceeding with the value.
 
 * The tag `foo` (3 bytes) tagging the text `hello` (5 bytes): `<3:foo|t5:hello,`
-* The tag `` (0 bytes) tagging the 8-bit integer 0: `<0:|i3:0,`
+* The tag `` (0 bytes) tagging the integer 0: `<0:|i:0,`
 
 ### records (products/records), also maps
 
@@ -99,7 +94,7 @@ Similar to records, lists start with the length of their whole encoded content.
 
 * The empty list: `[0:]`
 * The list with one element, the string `foo`: `[7:t3:foo,]`
-* The list with text `foo` followed by i3 `-42`: `[14:t3:foo,i3:-42,]`
+* The list with text `foo` followed by integer `-42`: `[13:t3:foo,i:-42,]`
 * The list with `Some` and `None` tags: `[33:<4:Some|t3:foo,<4None|u,<4None|u,]`
 
 ## parser security considerations

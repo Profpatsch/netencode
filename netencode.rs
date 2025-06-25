@@ -9,16 +9,10 @@ use std::io::{Read, Write};
 pub enum T {
     // Unit
     Unit,
-    // Boolean
-    N1(bool),
-    // Naturals
-    N3(u8),
-    N6(u64),
-    N7(u128),
-    // Integers
-    I3(i8),
-    I6(i64),
-    I7(i128),
+    // Naturals (64-bit)
+    N(u64),
+    // Integers (64-bit)
+    I(i64),
     // Text
     // TODO: make into &str
     Text(String),
@@ -37,13 +31,8 @@ impl T {
     pub fn to_u<'a>(&'a self) -> U<'a> {
         match self {
             T::Unit => U::Unit,
-            T::N1(b) => U::N1(*b),
-            T::N3(u) => U::N3(*u),
-            T::N6(u) => U::N6(*u),
-            T::N7(u) => U::N7(*u),
-            T::I3(i) => U::I3(*i),
-            T::I6(i) => U::I6(*i),
-            T::I7(i) => U::I7(*i),
+            T::N(u) => U::N(*u),
+            T::I(i) => U::I(*i),
             T::Text(t) => U::Text(t.as_str()),
             T::Binary(v) => U::Binary(v),
             T::Sum(Tag { tag, val }) => U::Sum(Tag {
@@ -66,16 +55,10 @@ impl T {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum U<'a> {
     Unit,
-    // Boolean
-    N1(bool),
-    // Naturals
-    N3(u8),
-    N6(u64),
-    N7(u128),
-    // Integers
-    I3(i8),
-    I6(i64),
-    I7(i128),
+    // Naturals (64-bit)
+    N(u64),
+    // Integers (64-bit)
+    I(i64),
     // Text
     Text(&'a str),
     Binary(&'a [u8]),
@@ -98,13 +81,8 @@ impl<'a> U<'a> {
     pub fn to_t(&self) -> T {
         match self {
             U::Unit => T::Unit,
-            U::N1(b) => T::N1(*b),
-            U::N3(u) => T::N3(*u),
-            U::N6(u) => T::N6(*u),
-            U::N7(u) => T::N7(*u),
-            U::I3(i) => T::I3(*i),
-            U::I6(i) => T::I6(*i),
-            U::I7(i) => T::I7(*i),
+            U::N(u) => T::N(*u),
+            U::I(i) => T::I(*i),
             U::Text(t) => T::Text((*t).to_owned()),
             U::Binary(v) => T::Binary((*v).to_owned()),
             U::Sum(Tag { tag, val }) => T::Sum(Tag {
@@ -149,19 +127,8 @@ fn encode_tag<W: Write>(w: &mut W, tag: &str, val: &U) -> std::io::Result<()> {
 pub fn encode<W: Write>(w: &mut W, u: &U) -> std::io::Result<()> {
     match u {
         U::Unit => write!(w, "u,"),
-        U::N1(b) => {
-            if *b {
-                write!(w, "n1:1,")
-            } else {
-                write!(w, "n1:0,")
-            }
-        }
-        U::N3(n) => write!(w, "n3:{},", n),
-        U::N6(n) => write!(w, "n6:{},", n),
-        U::N7(n) => write!(w, "n7:{},", n),
-        U::I3(i) => write!(w, "i3:{},", i),
-        U::I6(i) => write!(w, "i6:{},", i),
-        U::I7(i) => write!(w, "i7:{},", i),
+        U::N(n) => write!(w, "n:{},", n),
+        U::I(i) => write!(w, "i:{},", i),
         U::Text(s) => {
             write!(w, "t{}:", s.len());
             w.write_all(s.as_bytes());
@@ -351,10 +318,14 @@ pub mod parse {
         }
     }
 
+
     fn bool_t<'a>() -> impl Fn(&'a [u8]) -> IResult<&'a [u8], bool> {
         context(
             "bool",
-            alt((map(tag("n1:0,"), |_| false), map(tag("n1:1,"), |_| true))),
+            alt((
+                map(tag("<5:false|u,"), |_| false),
+                map(tag("<4:true|u,"), |_| true)
+            )),
         )
     }
 
@@ -507,22 +478,8 @@ pub mod parse {
             map(tag_g(u_u), |t| U::Sum(t)),
             map(list_g(u_u), U::List),
             map(record_g(u_u), U::Record),
-            map(bool_t(), |u| U::N1(u)),
-            map(uint_t("n3"), |u| U::N3(u)),
-            map(uint_t("n6"), |u| U::N6(u)),
-            map(uint_t("n7"), |u| U::N7(u)),
-            map(int_t("i3"), |u| U::I3(u)),
-            map(int_t("i6"), |u| U::I6(u)),
-            map(int_t("i7"), |u| U::I7(u)),
-            // less common
-            map(uint_t("n2"), |u| U::N3(u)),
-            map(uint_t("n4"), |u| U::N6(u)),
-            map(uint_t("n5"), |u| U::N6(u)),
-            map(int_t("i1"), |u| U::I3(u)),
-            map(int_t("i2"), |u| U::I3(u)),
-            map(int_t("i4"), |u| U::I6(u)),
-            map(int_t("i5"), |u| U::I6(u)),
-            // TODO: 8, 9 not supported
+            map(uint_t("n"), |u| U::N(u)),
+            map(int_t("i"), |u| U::I(u)),
         ))(s)
     }
 
@@ -534,23 +491,8 @@ pub mod parse {
             map(tag_t, |t| T::Sum(t)),
             map(list_t, |l| T::List(l)),
             map(record_t, |p| T::Record(p)),
-            map(bool_t(), |u| T::N1(u)),
-            // 8, 64 and 128 bit
-            map(uint_t("n3"), |u| T::N3(u)),
-            map(uint_t("n6"), |u| T::N6(u)),
-            map(uint_t("n7"), |u| T::N7(u)),
-            map(int_t("i3"), |u| T::I3(u)),
-            map(int_t("i6"), |u| T::I6(u)),
-            map(int_t("i7"), |u| T::I7(u)),
-            // less common
-            map(uint_t("n2"), |u| T::N3(u)),
-            map(uint_t("n4"), |u| T::N6(u)),
-            map(uint_t("n5"), |u| T::N6(u)),
-            map(int_t("i1"), |u| T::I3(u)),
-            map(int_t("i2"), |u| T::I3(u)),
-            map(int_t("i4"), |u| T::I6(u)),
-            map(int_t("i5"), |u| T::I6(u)),
-            // TODO: 8, 9 not supported
+            map(uint_t("n"), |u| T::N(u)),
+            map(int_t("i"), |u| T::I(u)),
         ))(s)
     }
 
@@ -565,8 +507,8 @@ pub mod parse {
 
         #[test]
         fn test_parse_bool_t() {
-            assert_eq!(bool_t()("n1:0,".as_bytes()), Ok(("".as_bytes(), false)));
-            assert_eq!(bool_t()("n1:1,".as_bytes()), Ok(("".as_bytes(), true)));
+            assert_eq!(bool_t()("<5:false|u,".as_bytes()), Ok(("".as_bytes(), false)));
+            assert_eq!(bool_t()("<4:true|u,".as_bytes()), Ok(("".as_bytes(), true)));
         }
 
         #[test]
@@ -577,26 +519,19 @@ pub mod parse {
         #[test]
         fn test_parse_int_t() {
             assert_eq!(
-                uint_t::<u8>("n3")("n3:42,abc".as_bytes()),
+                uint_t::<u64>("n")("n:42,abc".as_bytes()),
                 Ok(("abc".as_bytes(), 42))
             );
             assert_eq!(
-                uint_t::<u8>("n3")("n3:1024,abc".as_bytes()),
-                Err(nom::Err::Error((
-                    "1024,abc".as_bytes(),
-                    nom::error::ErrorKind::MapRes
-                )))
-            );
-            assert_eq!(
-                int_t::<i64>("i6")("i6:-23,abc".as_bytes()),
+                int_t::<i64>("i")("i:-23,abc".as_bytes()),
                 Ok(("abc".as_bytes(), -23))
             );
             assert_eq!(
-                int_t::<i128>("i3")("i3:0,:abc".as_bytes()),
+                int_t::<i64>("i")("i:0,:abc".as_bytes()),
                 Ok((":abc".as_bytes(), 0))
             );
             assert_eq!(
-                uint_t::<u8>("n7")("n7:09,".as_bytes()),
+                uint_t::<u64>("n")("n:09,".as_bytes()),
                 Ok(("".as_bytes(), 9))
             );
             // assert_eq!(
@@ -706,15 +641,15 @@ pub mod parse {
             );
             // duplicated keys are ignored (first is taken)
             assert_eq!(
-                record_t("{25:<1:a|u,<1:b|u,<1:a|i1:-1,}".as_bytes()),
+                record_t("{24:<1:a|u,<1:b|u,<1:a|i:-1,}".as_bytes()),
                 Ok((
                     "".as_bytes(),
-                    vec![("a".to_owned(), T::I3(-1)), ("b".to_owned(), T::Unit),]
+                    vec![("a".to_owned(), T::I(-1)), ("b".to_owned(), T::Unit),]
                         .into_iter()
                         .collect::<HashMap<_, _>>()
                 )),
                 "{}",
-                r"{25:<1:a|u,<1:b|u,<1:a|i1:-1,}"
+                r"{24:<1:a|u,<1:b|u,<1:a|i:-1,}"
             );
             // empty records are not allowed
             assert_eq!(
@@ -731,10 +666,10 @@ pub mod parse {
         #[test]
         fn test_parse() {
             assert_eq!(
-                t_t("n3:255,".as_bytes()),
-                Ok(("".as_bytes(), T::N3(255))),
+                t_t("n:255,".as_bytes()),
+                Ok(("".as_bytes(), T::N(255))),
                 "{}",
-                r"n3:255,"
+                r"n:255,"
             );
             assert_eq!(
                 t_t("t6:halloo,".as_bytes()),
@@ -755,9 +690,9 @@ pub mod parse {
                 r"<3:foo|t6:halloo,"
             );
             // { a: Unit
-            // , foo: List <A: Unit | B: List i3> }
+            // , foo: List <A: Unit | B: List i> }
             assert_eq!(
-                t_t("{52:<1:a|u,<3:foo|[33:<1:A|u,<1:A|n1:1,<1:B|[7:i3:127,]]}".as_bytes()),
+                t_t("{56:<3:foo|[37:<1:A|u,<1:A|<4:true|u,<1:B|[6:i:127,]]<1:a|u,}".as_bytes()),
                 Ok((
                     "".as_bytes(),
                     T::Record(
@@ -772,11 +707,14 @@ pub mod parse {
                                     }),
                                     T::Sum(Tag {
                                         tag: "A".to_owned(),
-                                        val: Box::new(T::N1(true))
+                                        val: Box::new(T::Sum(Tag {
+                                            tag: "true".to_owned(),
+                                            val: Box::new(T::Unit)
+                                        }))
                                     }),
                                     T::Sum(Tag {
                                         tag: "B".to_owned(),
-                                        val: Box::new(T::List(vec![T::I3(127)]))
+                                        val: Box::new(T::List(vec![T::I(127)]))
                                     }),
                                 ])
                             )
@@ -786,7 +724,7 @@ pub mod parse {
                     )
                 )),
                 "{}",
-                r"{52:<1:a|u,<3:foo|[33:<1:A|u,<1:A|n1:1,<1:B|[7:i3:127,]]}"
+                r"{56:<3:foo|[37:<1:A|u,<1:A|<4:true|u,<1:B|[6:i:127,]]<1:a|u,}"
             );
         }
     }
@@ -864,12 +802,8 @@ pub mod dec {
         type A = Vec<u8>;
         fn dec(&self, u: U<'a>) -> Result<Self::A, DecodeError> {
             match u {
-                U::N3(u) => Ok(format!("{}", u).into_bytes()),
-                U::N6(u) => Ok(format!("{}", u).into_bytes()),
-                U::N7(u) => Ok(format!("{}", u).into_bytes()),
-                U::I3(i) => Ok(format!("{}", i).into_bytes()),
-                U::I6(i) => Ok(format!("{}", i).into_bytes()),
-                U::I7(i) => Ok(format!("{}", i).into_bytes()),
+                U::N(u) => Ok(format!("{}", u).into_bytes()),
+                U::I(i) => Ok(format!("{}", i).into_bytes()),
                 U::Text(t) => Ok(t.as_bytes().to_owned()),
                 U::Binary(b) => Ok(b.to_owned()),
                 o => Err(DecodeError(format!("Cannot decode {:?} into scalar", o))),

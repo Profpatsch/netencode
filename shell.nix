@@ -31,7 +31,8 @@ pkgs.mkShell {
     ]))
     pkgs.haskellPackages.cabal-install
     pkgs.haskellPackages.haskell-language-server
-
+    pkgs.rustc
+    pkgs.cargo
 
     # keep this line if you use bash
     pkgs.bashInteractive
