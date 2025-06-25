@@ -2,51 +2,254 @@
 
 [bencode][] and [netstring][]-inspired pipe format that should be trivial to generate correctly in every context (only requires a `byte_length()` and a `printf()`), easy to parse (100 lines of code or less), mostly human-decipherable for easy debugging, and support nested record and sum types.
 
+## Quick Start: Pipeline-Friendly Data Processing
 
-## scalars
+Netencode excels at **human-readable data pipelines**. Unlike binary formats, you can debug your data streams by simply looking at them.
 
-Scalars have the format `[type prefix][size]:[value],`.
+### The Debug-by-Looking Advantage
 
-where size is a natural number without leading zeroes.
+```bash
+# With netencode, you can see what's flowing through your pipes:
+some-data-source | tee /dev/stderr | next-processing-step
+# Output shows readable data:
+# {25:<4:name|t5:Alice,<3:age|n:30,}
+# {23:<4:name|t3:Bob,<3:age|n:25,}
 
-### unit
+# Compare with binary formats where you see:
+# ���A9�f��binary-gibberish��
 
-The unit (`u`) has only one value.
+# With text formats, you need extra work to handle structure:
+echo "Alice,30" | cut -d',' -f1  # Fragile CSV parsing
+echo "Alice 30" | awk '{print $1}'  # Whitespace assumptions
 
-* The unit is: `u,`
+# Netencode handles structure naturally:
+echo '{25:<4:name|t5:Alice,<3:age|n:30,}' | ne-get name
+# Outputs: t5:Alice,
+```
 
-### numbers
+## Netencode vs JSON
 
-Naturals (`n`) and Integers (`i`) are 64-bit values.
+While JSON and netencode both represent structured data, they solve different problems:
 
+**JSON Example:**
+```json
+{"name": "Alice", "age": 30, "active": true}
+```
 
-* Natural `1234`: `n:1234,`
-* Integer `-42`: `i:-42,`
-* Integer `23`: `i:23,`
-* Natural `0`: `n:0,`
+**Netencode Example:**
+```
+{33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}
+```
 
+### Length-Prefixed vs Delimiter-Based Parsing
 
-Floats are not supported, you can implement fixed-size decimals or ratios using integers.
+JSON requires scanning the entire document to find object boundaries. With `{"key": "some value with \"}\" inside"}`, you must parse the whole thing to know where it ends. Netencode's `{33:...}` tells you exactly 33 bytes of content follow, enabling efficient streaming and skipping over uninteresting values.
 
-### booleans
+### Explicit Type Information
 
-Booleans are conventionally represented by the tagged unit values (see below for tags).
+JSON numbers are ambiguous—`42` could be an integer or float. Netencode distinguishes `n:42` (natural number) from `i:-42` (signed integer). Booleans in JSON are primitives; in netencode they're tagged units: `<4:true|u,` making the type system more uniform.
 
-* `<5:false|u,`: false
-* `<4:true|u,`: true
+### Binary Data Support
 
-### text
+JSON can only represent UTF-8 clean text. Unix filenames can contain arbitrary bytes that aren't valid UTF-8. In JSON, you'd need base64 encoding or escaping. Netencode handles this directly with binary strings:
 
-Text (`t`) that *must* be encoded as UTF-8, starting with its length in bytes:
+```bash
+# Create a filename with non-UTF-8 bytes (common in legacy systems)
+FILENAME=$(printf 'file\xff\x00name')
+LENGTH=$(printf "%s" "$FILENAME" | wc -c)
 
-* The string `hello world` (11 bytes): `t11:hello world,`
-* The string `今日は` (9 bytes): `t9:今日は,`
-* The string `:,` (2 bytes): `t2::,,`
-* The empty sting `` (0 bytes): `t0:,`
+# JSON: Must escape or encode - cannot represent raw bytes
+# Escape sequences:
+echo '{"filename": "file\\u00ff\\u0000name"}'
+# Base64 encoding:
+echo '{"filename": "ZmlsZfAAbmFtZQ=="}'
 
-### binary
+# Netencode: Embed raw bytes directly with length prefix
+printf "b${LENGTH}:${FILENAME},"
+# Creates: b9:file<0xff><0x00>name, (raw bytes, no escaping needed)
+```
 
-Arbitrary binary strings (`b`) that can contain any data, starting with its length in bytes.
+### No Escaping Required
+
+JSON strings need escaping: `"He said \"Hello\""` becomes complex with nested quotes and backslashes. Netencode's length prefixes eliminate this: `t12:He said "Hello",` contains the quotes literally.
+
+### Construct with only a byte_length() and a printf()
+
+```bash
+# Construct a netencode record anywhere if you have these two primitives:
+printf "b%d:%s," $(echo "Hello, World!" | wc -c) "Hello, World!"
+# Output: b13:Hello, World!,
+```
+
+### When to Use JSON
+
+- **Web APIs**: Universal browser support and widespread tooling
+- **Configuration files**: When human editing is primary concern
+- **Interoperability**: Communicating with systems that expect JSON
+
+### When to Use Netencode
+
+- **Unix pipelines**: Processing structured data with shell tools
+- **Binary data**: Embedding filenames, images, or arbitrary byte sequences
+- **Type-safe systems**: When explicit types prevent bugs
+- **Performance-critical parsing**: Minimal parser complexity
+- **Debugging data flows**: When you need to see what's flowing through pipes
+
+### JSON to Netencode Pipeline
+
+```bash
+# Convert JSON API response to netencode for pipeline processing
+curl -s api/users.json | json-to-netencode
+# Output: {25:<4:name|t5:Alice,<3:age|n:30,}
+
+# Filter active users (you can see exactly what's being filtered)
+curl -s api/users.json | json-to-netencode | netencode-filter active=true
+# Shows: {33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}
+
+# Extract specific field
+curl -s api/users.json | json-to-netencode | netencode-filter active=true | record-get name
+# Shows: t5:Alice,
+```
+
+### Environment Integration
+
+```bash
+# Convert your environment to structured data
+env-splice-record
+# Output: {200:<4:HOME|t10:/home/user,<4:PATH|t50:/usr/bin:/bin,<4:USER|t4:user,...}
+
+# Use structured data as environment for commands
+echo '{25:<4:name|t5:Alice,<3:age|n:30,}' | record-splice-env echo "Hello $name, you are $age years old"
+# Output: Hello Alice, you are 30 years old
+```
+
+### Log Processing Pipeline
+
+```bash
+# Process application logs (assuming they're in JSON format)
+tail -f app.log | json-to-netencode | netencode-filter level=error | record-get message
+# Shows error messages as they happen, and you can see the full structured data mid-pipeline
+```
+
+## Real-World Examples
+
+### API Data Processing
+
+```bash
+# Fetch user data from GitHub API and extract active repositories
+curl -s https://api.github.com/users/octocat/repos | json-to-netencode | netencode-filter archived=false | record-get name
+# Output: t9:Hello-World,t13:octocat.github.io,
+
+# Compare with raw JSON (binary soup when debugging):
+curl -s https://api.github.com/users/octocat/repos | jq '.[] | select(.archived == false) | .name'
+```
+
+### Configuration Management
+
+```bash
+# netencode config file (human-readable, machine-parseable):
+cat > app.config << 'EOF'
+{55:<4:host|t9:localhost,<4:port|n:8080,<5:debug|<4:true|u,}
+EOF
+
+# Extract configuration values for shell scripts:
+HOST=$(cat app.config | record-get host | sed 's/^t[0-9]*://' | sed 's/,$//')
+PORT=$(cat app.config | record-get port | sed 's/^n://' | sed 's/,$//')
+echo "Starting server on $HOST:$PORT"
+```
+
+### Log Processing Pipeline
+
+```bash
+# Monitor application logs and extract errors in real-time:
+tail -f /var/log/app.log |
+  json-to-netencode |
+  netencode-filter level=error |
+  tee error.log |                    # Save errors while processing
+  record-get message                 # Show just the error messages
+
+# You can see the full structured data at any stage by adding `tee /dev/stderr`
+```
+
+### Data Transformation
+
+```bash
+# Transform API response data for another service:
+curl -s api/source.json |
+  json-to-netencode |
+  netencode-filter status=active |    # Filter active records
+  while read -r record; do
+    # Extract fields and transform
+    NAME=$(echo "$record" | record-get name | sed 's/^t[0-9]*://' | sed 's/,$//')
+    EMAIL=$(echo "$record" | record-get email | sed 's/^t[0-9]*://' | sed 's/,$//')
+    # Output in netencode format for next stage
+    echo "{$(( ${#NAME} + ${#EMAIL} + 25 )):<4:user|t${#NAME}:${NAME},<5:email|t${#EMAIL}:${EMAIL},}"
+  done
+```
+
+### Format Comparison: JSON vs Netencode
+
+**JSON:**
+```json
+{"name": "Alice", "age": 30, "active": true}
+```
+
+**Netencode:**
+```
+{33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}
+```
+
+**Advantages of netencode version:**
+- Length-prefixed: `{33:` tells you exactly 33 bytes of content
+- Type-explicit: `t5:` = 5 bytes of text, `n:30` = natural number
+- No escaping: Text like `"quotes"` or `\backslashes` require no special handling
+- Streaming-friendly: You can parse incrementally without scanning for delimiters
+- Visually debuggable: Each component is clearly separated and typed
+
+## Format Specification
+
+## Scalar Types
+
+All netencode values follow a consistent pattern: `[type][size]:[data][terminator]`
+
+Where **size** is a natural number without leading zeroes.
+
+### Unit Type
+The unit type represents a value with no data.
+
+| Format | Description |
+|--------|-------------|
+| `u,` | The only unit value |
+
+### Numbers
+All numbers are 64-bit values. Floats are not supported—use integers for fixed-point decimals.
+
+| Type | Format | Examples |
+|------|--------|----------|
+| **Natural** | `n:[value],` | `n:0,` `n:1234,` `n:18446744073709551615,` |
+| **Integer** | `i:[value],` | `i:0,` `i:-42,` `i:23,` `i:-9223372036854775808,` |
+
+### Booleans
+Represented as tagged unit values (see Tagged Values section below).
+
+| Value | Format | Description |
+|-------|--------|-------------|
+| **true** | `<4:true|u,` | Boolean true as tagged unit |
+| **false** | `<5:false|u,` | Boolean false as tagged unit |
+
+### Text Strings
+UTF-8 encoded text with byte-length prefix.
+
+| Format | Examples |
+|--------|----------|
+| `t[size]:[text],` | `t11:hello world,` |
+| | `t9:今日は,` (9 UTF-8 bytes) |
+| | `t2::,,` (contains `:,` literally) |
+| | `t0:,` (empty string) |
+
+### Binary Data
+
+Arbitrary byte sequences with length prefix. No escaping required.
 
 * The ASCII string `hello world` as binary data (11 bytes): `b11:hello world,`
 * The empty binary string (0 bytes): `b0:,`
@@ -117,7 +320,41 @@ it should also never parse anything longer than 1024 bytes for the value
 
 ## motivation
 
-TODO
+Netencode bridges the gap between human-readable and machine-efficient data formats, optimized for the Unix pipeline philosophy.
+
+### Why Netencode?
+
+**Human-Readable Debugging**: Unlike MessagePack, Protocol Buffers, or other binary formats, you can visually inspect your data streams. When a pipeline breaks, you can see exactly what data is flowing through each stage.
+
+**Length-Prefixed Streaming**: Unlike JSON (which requires parsing the entire document to find boundaries), netencode uses length prefixes that allow efficient streaming and incremental parsing. You know exactly how many bytes to read.
+
+**Type Safety**: Every value has an explicit type (`n:` for naturals, `t5:` for 5-byte text, etc.), eliminating the ambiguity found in formats like JSON where numbers might be integers or floats.
+
+**Shell-Friendly**: Designed for command-line tools and shell scripting. No escaping nightmares, no quote handling complexity, no parsing edge cases.
+
+**Trivial Generation**: Only requires `byte_length()` and `printf()` - you can generate valid netencode in any language with these basic primitives.
+
+**Minimal Parsing**: Complete parsers can be written in under 100 lines of code, making it easy to add netencode support to any tool.
+
+### Comparison with Alternatives
+
+| Format | Human Readable | Type Safe | Streaming | Shell Friendly | Parse Complexity |
+|--------|---------------|-----------|-----------|----------------|------------------|
+| **netencode** | ✓ | ✓ | ✓ | ✓ | Minimal |
+| JSON | ✓ | ✗ | ✗ | ✗ | Medium |
+| MessagePack | ✗ | ✓ | ✓ | ✗ | Medium |
+| Protocol Buffers | ✗ | ✓ | ✓ | ✗ | High |
+| CBOR | ✗ | ✓ | ✓ | ✗ | Medium |
+| Bencode | ✓ | ✗ | ✓ | ✗ | Low |
+
+### Ideal Use Cases
+
+- **Data Pipelines**: Where you need to see what's happening at each stage
+- **Shell Scripting**: Processing structured data with standard Unix tools
+- **Log Processing**: Human-readable structured logs that are also machine-parseable
+- **Configuration Files**: Readable by humans, reliable for machines
+- **Inter-Process Communication**: When debugging is important
+- **API Development**: During development when you need to inspect payloads
 
 ## guarantees
 

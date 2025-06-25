@@ -1,0 +1,278 @@
+"""
+Integration tests for netencode pipeline tools.
+Ported from BATS integration_tests.bats.
+"""
+import pytest
+from conftest import run_tool
+
+
+class TestJSONToNetencode:
+    """Test JSON to netencode conversion functionality."""
+    
+    def test_converts_simple_object(self, json_samples):
+        """json-to-netencode converts simple object."""
+        result = run_tool('json-to-netencode', stdin=json_samples['simple_object'])
+        
+        # Should contain both fields in netencode format
+        assert '<4:name|t5:Alice' in result.stdout
+        assert '<3:age|i:30' in result.stdout
+    
+    def test_converts_boolean_values(self, json_samples):
+        """json-to-netencode converts boolean values."""
+        result = run_tool('json-to-netencode', stdin=json_samples['boolean_object'])
+        
+        # Booleans should be converted to tagged units
+        assert '<6:active|<4:true|u' in result.stdout
+        assert '<8:disabled|<5:false|u' in result.stdout
+    
+    def test_converts_arrays(self, json_samples):
+        """json-to-netencode converts arrays."""
+        result = run_tool('json-to-netencode', stdin=json_samples['array_object'])
+        
+        # Should contain list with text elements
+        assert '<5:items|[' in result.stdout
+        assert 't3:foo' in result.stdout
+        assert 't3:bar' in result.stdout
+    
+    def test_handles_numbers_correctly(self, json_samples):
+        """json-to-netencode handles numbers correctly."""
+        result = run_tool('json-to-netencode', stdin=json_samples['number_object'])
+        
+        # Should handle different number types
+        assert '<8:positive|i:42' in result.stdout
+        assert '<8:negative|i:-17' in result.stdout
+        assert '<4:zero|i:0' in result.stdout
+    
+    def test_handles_null_values(self, json_samples):
+        """json-to-netencode handles null values."""
+        result = run_tool('json-to-netencode', stdin=json_samples['null_object'])
+        
+        # Null should become unit type
+        assert '<5:empty|u' in result.stdout
+    
+    def test_rejects_malformed_json(self):
+        """json-to-netencode rejects malformed JSON."""
+        result = run_tool('json-to-netencode', 
+                         stdin='{"invalid": json}', 
+                         expect_success=False)
+        
+        # Should fail with non-zero exit code
+        assert result.returncode != 0
+
+
+class TestNetencodeFilter:
+    """Test netencode filtering functionality."""
+    
+    def test_filters_by_text_field(self, json_samples):
+        """netencode-filter filters by text field."""
+        # Create test data: two records, one matching
+        record1 = '{"name": "Alice", "role": "admin"}'
+        record2 = '{"name": "Bob", "role": "user"}'
+        
+        # Convert to netencode
+        ne1 = run_tool('json-to-netencode', stdin=record1).stdout.strip()
+        ne2 = run_tool('json-to-netencode', stdin=record2).stdout.strip()
+        input_stream = f"{ne1}\n{ne2}"
+        
+        # Filter by role=admin
+        result = run_tool('netencode-filter', 'role=admin', stdin=input_stream)
+        
+        # Should only contain Alice's record
+        assert 'Alice' in result.stdout
+        assert 'Bob' not in result.stdout
+    
+    def test_filters_by_number_field(self):
+        """netencode-filter filters by number field."""
+        record1 = '{"name": "Alice", "age": 30}'
+        record2 = '{"name": "Bob", "age": 25}'
+        
+        # Convert to netencode
+        ne1 = run_tool('json-to-netencode', stdin=record1).stdout.strip()
+        ne2 = run_tool('json-to-netencode', stdin=record2).stdout.strip()
+        input_stream = f"{ne1}\n{ne2}"
+        
+        # Filter by age=30
+        result = run_tool('netencode-filter', 'age=30', stdin=input_stream)
+        
+        # Should only contain Alice's record
+        assert 'Alice' in result.stdout
+        assert 'Bob' not in result.stdout
+    
+    def test_filters_by_boolean_field(self):
+        """netencode-filter filters by boolean field."""
+        record1 = '{"name": "Alice", "active": true}'
+        record2 = '{"name": "Bob", "active": false}'
+        
+        # Convert to netencode
+        ne1 = run_tool('json-to-netencode', stdin=record1).stdout.strip()
+        ne2 = run_tool('json-to-netencode', stdin=record2).stdout.strip()
+        input_stream = f"{ne1}\n{ne2}"
+        
+        # Filter by active=true
+        result = run_tool('netencode-filter', 'active=true', stdin=input_stream)
+        
+        # Should only contain Alice's record
+        assert 'Alice' in result.stdout
+        assert 'Bob' not in result.stdout
+    
+    def test_produces_no_output_for_non_matching_records(self):
+        """netencode-filter produces no output for non-matching records."""
+        record = '{"name": "Alice", "role": "user"}'
+        ne_record = run_tool('json-to-netencode', stdin=record).stdout.strip()
+        
+        result = run_tool('netencode-filter', 'role=admin', stdin=ne_record)
+        
+        # Should produce no output
+        assert result.stdout.strip() == ""
+    
+    def test_passes_through_non_record_values(self):
+        """netencode-filter passes through non-record values."""
+        # Test with a simple text value
+        input_data = 't5:hello,'
+        result = run_tool('netencode-filter', 'field=value', stdin=input_data)
+        
+        # Should pass through unchanged
+        assert result.stdout.strip() == 't5:hello,'
+    
+    def test_handles_missing_fields_gracefully(self):
+        """netencode-filter handles missing fields gracefully."""
+        record = '{"name": "Alice"}'
+        ne_record = run_tool('json-to-netencode', stdin=record).stdout.strip()
+        
+        result = run_tool('netencode-filter', 'missing=value', stdin=ne_record)
+        
+        # Should produce no output for missing field
+        assert result.stdout.strip() == ""
+
+
+class TestPipelineIntegration:
+    """Test complete pipeline integration."""
+    
+    def test_complete_json_to_netencode_to_filter_to_extract_pipeline(self):
+        """Test the full pipeline: JSON -> netencode -> filter -> extract field."""
+        record = '{"name": "Alice", "role": "admin"}'
+        
+        # JSON -> netencode -> filter -> extract name
+        ne_record = run_tool('json-to-netencode', stdin=record).stdout.strip()
+        filtered = run_tool('netencode-filter', 'role=admin', stdin=ne_record).stdout.strip()
+        name = run_tool('record-get', 'name', stdin=filtered).stdout.strip()
+        
+        # Should extract Alice's name in netencode format
+        assert name == 't5:Alice,'
+    
+    def test_pipeline_handles_multiple_records_correctly(self):
+        """Pipeline handles multiple records correctly."""
+        # Create multiple JSON records
+        record1 = '{"name": "Alice", "active": true}'
+        record2 = '{"name": "Bob", "active": false}'
+        record3 = '{"name": "Charlie", "active": true}'
+        
+        # Convert each to netencode and combine
+        ne1 = run_tool('json-to-netencode', stdin=record1).stdout.strip()
+        ne2 = run_tool('json-to-netencode', stdin=record2).stdout.strip()
+        ne3 = run_tool('json-to-netencode', stdin=record3).stdout.strip()
+        
+        # Filter for active users
+        input_stream = f"{ne1}\n{ne2}\n{ne3}"
+        result = run_tool('netencode-filter', 'active=true', stdin=input_stream)
+        
+        # Should contain Alice and Charlie, but not Bob
+        assert 'Alice' in result.stdout
+        assert 'Charlie' in result.stdout
+        assert 'Bob' not in result.stdout
+    
+    def test_error_handling_through_pipeline(self):
+        """Test that errors propagate correctly."""
+        invalid_json = '{"invalid": json}'
+        
+        # Should fail at the JSON parsing stage
+        result = run_tool('json-to-netencode', stdin=invalid_json, expect_success=False)
+        assert result.returncode != 0
+
+
+class TestToolCompatibility:
+    """Test compatibility between tools."""
+    
+    def test_json_to_netencode_output_works_with_record_get(self):
+        """json-to-netencode output works with record-get."""
+        input_json = '{"name": "Alice", "age": 30}'
+        netencode_output = run_tool('json-to-netencode', stdin=input_json).stdout.strip()
+        
+        name_result = run_tool('record-get', 'name', stdin=netencode_output).stdout.strip()
+        age_result = run_tool('record-get', 'age', stdin=netencode_output).stdout.strip()
+        
+        # Should extract fields correctly
+        assert name_result == 't5:Alice,'
+        assert age_result == 'i:30,'
+    
+    def test_filtered_records_work_with_existing_tools(self):
+        """Filtered records work with existing tools."""
+        record1 = '{"name": "Alice", "role": "admin"}'
+        record2 = '{"name": "Bob", "role": "user"}'
+        
+        # Create netencode stream
+        ne1 = run_tool('json-to-netencode', stdin=record1).stdout.strip()
+        ne2 = run_tool('json-to-netencode', stdin=record2).stdout.strip()
+        input_stream = f"{ne1}\n{ne2}"
+        
+        # Filter and extract names
+        filtered = run_tool('netencode-filter', 'role=admin', stdin=input_stream).stdout.strip()
+        name = run_tool('record-get', 'name', stdin=filtered).stdout.strip()
+        
+        # Should get Alice's name
+        assert name == 't5:Alice,'
+    
+    def test_netencode_format_compatibility_across_tools(self):
+        """Test that our new tools produce valid netencode that existing tools can consume."""
+        input_json = '{"test": "value"}'
+        netencode_output = run_tool('json-to-netencode', stdin=input_json).stdout.strip()
+        
+        # Should be able to extract the field with existing tool
+        result = run_tool('record-get', 'test', stdin=netencode_output).stdout.strip()
+        assert result == 't5:value,'
+
+
+class TestEdgeCases:
+    """Test edge cases and error handling."""
+    
+    def test_empty_input_handling(self):
+        """Test how tools handle empty input."""
+        # JSON conversion should fail on empty input
+        result = run_tool('json-to-netencode', stdin='', expect_success=False)
+        assert result.returncode != 0
+        
+        # Filter should handle empty input gracefully
+        result = run_tool('netencode-filter', 'field=value', stdin='')
+        assert result.returncode == 0
+    
+    def test_unicode_handling_in_json_to_netencode(self):
+        """Unicode handling in JSON to netencode."""
+        input_json = '{"message": "Hello 世界", "emoji": "🌍"}'
+        result = run_tool('json-to-netencode', stdin=input_json)
+        
+        # Should contain unicode text properly encoded
+        assert 'message' in result.stdout
+        assert 'emoji' in result.stdout
+    
+    def test_special_characters_in_field_names_and_values(self):
+        """Special characters in field names and values."""
+        input_json = '{"field:with:colons": "value,with,commas"}'
+        result = run_tool('json-to-netencode', stdin=input_json)
+        
+        # Should handle special characters correctly (length-prefixed format)
+        assert 'field:with:colons' in result.stdout
+        assert 'value,with,commas' in result.stdout
+    
+    def test_filter_expression_validation(self):
+        """Filter expression validation."""
+        record = '{"name": "Alice"}'
+        ne_record = run_tool('json-to-netencode', stdin=record).stdout.strip()
+        
+        # Test invalid filter expressions
+        result = run_tool('netencode-filter', 'invalid_expression', 
+                         stdin=ne_record, expect_success=False)
+        assert result.returncode != 0
+        
+        # This should handle by taking first = as separator
+        result = run_tool('netencode-filter', 'field=value=extra', stdin=ne_record)
+        assert result.returncode == 0

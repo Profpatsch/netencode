@@ -176,6 +176,151 @@ let
     }
   '';
 
+  json-to-netencode = rust-writers.rustSimple
+    {
+      name = "json-to-netencode";
+      dependencies = [
+        netencode-rs
+        exec-helpers.exec-helpers-rs
+        rust-crates.serde_json
+      ];
+    } ''
+    extern crate netencode;
+    extern crate exec_helpers;
+    extern crate serde_json;
+    use netencode::{T, Tag};
+    use std::collections::HashMap;
+
+    fn json_to_netencode(value: serde_json::Value) -> T {
+        match value {
+            serde_json::Value::Null => T::Unit,
+            serde_json::Value::Bool(true) => T::Sum(Tag {
+                tag: "true".to_string(),
+                val: Box::new(T::Unit),
+            }),
+            serde_json::Value::Bool(false) => T::Sum(Tag {
+                tag: "false".to_string(),
+                val: Box::new(T::Unit),
+            }),
+            serde_json::Value::Number(n) => {
+                if let Some(i) = n.as_i64() {
+                    T::I(i)
+                } else if let Some(u) = n.as_u64() {
+                    T::N(u)
+                } else {
+                    // Float - convert to string representation
+                    T::Text(n.to_string())
+                }
+            },
+            serde_json::Value::String(s) => T::Text(s),
+            serde_json::Value::Array(arr) => {
+                T::List(arr.into_iter().map(json_to_netencode).collect())
+            },
+            serde_json::Value::Object(obj) => {
+                let mut map = HashMap::new();
+                for (k, v) in obj {
+                    map.insert(k, json_to_netencode(v));
+                }
+                T::Record(map)
+            },
+        }
+    }
+
+    fn main() {
+        exec_helpers::no_args("json-to-netencode");
+        let stdin = std::io::stdin();
+        let reader = stdin.lock();
+        
+        match serde_json::from_reader::<_, serde_json::Value>(reader) {
+            Ok(json_value) => {
+                let netencode_value = json_to_netencode(json_value);
+                netencode::encode(&mut std::io::stdout(), &netencode_value.to_u()).unwrap();
+            },
+            Err(e) => exec_helpers::die_user_error("json-to-netencode", format!("Failed to parse JSON: {}", e)),
+        }
+    }
+  '';
+
+  netencode-filter = rust-writers.rustSimple
+    {
+      name = "netencode-filter";
+      dependencies = [
+        netencode-rs
+        exec-helpers.exec-helpers-rs
+      ];
+    } ''
+    extern crate netencode;
+    extern crate exec_helpers;
+    use netencode::{T, U, dec};
+    use netencode::dec::{Decoder, DecodeError};
+    use std::io::{self, Write, BufRead, BufReader};
+
+    fn matches_filter(record: &std::collections::HashMap<String, T>, field: &str, value: &str) -> bool {
+        if let Some(field_value) = record.get(field) {
+            match field_value {
+                T::Text(s) => s == value,
+                T::N(n) => value.parse::<u64>().map_or(false, |v| *n == v),
+                T::I(i) => value.parse::<i64>().map_or(false, |v| *i == v),
+                T::Sum(tag) => tag.tag == value,
+                _ => false,
+            }
+        } else {
+            false
+        }
+    }
+
+    fn main() {
+        let args = exec_helpers::args("netencode-filter", 1);
+        let filter_expr = String::from_utf8(args[0].clone())
+            .expect("Filter expression must be valid UTF-8");
+        
+        let (field, value) = if let Some(eq_pos) = filter_expr.find('=') {
+            let field = &filter_expr[..eq_pos];
+            let value = &filter_expr[eq_pos + 1..];
+            (field, value)
+        } else {
+            exec_helpers::die_user_error("netencode-filter", "Filter expression must be in format 'field=value'");
+        };
+
+        let stdin = io::stdin();
+        let reader = BufReader::new(stdin.lock());
+        let mut stdout = io::stdout();
+        
+        for line in reader.lines() {
+            match line {
+                Ok(line_str) => {
+                    if line_str.trim().is_empty() {
+                        continue;
+                    }
+                    
+                    match netencode::parse::t_t(line_str.as_bytes()) {
+                        Ok((_, t)) => {
+                            match &t {
+                                T::Record(record) => {
+                                    if matches_filter(record, field, value) {
+                                        netencode::encode(&mut stdout, &t.to_u()).unwrap();
+                                        stdout.flush().unwrap();
+                                    }
+                                },
+                                _ => {
+                                    // Not a record, just pass through
+                                    netencode::encode(&mut stdout, &t.to_u()).unwrap();
+                                    stdout.flush().unwrap();
+                                }
+                            }
+                        },
+                        Err(_) => {
+                            // Invalid netencode, skip
+                            continue;
+                        }
+                    }
+                },
+                Err(_) => break,
+            }
+        }
+    }
+  '';
+
 in
 {
   inherit
@@ -187,6 +332,8 @@ in
     record-get
     record-splice-env
     env-splice-record
+    json-to-netencode
+    netencode-filter
     gen
     ;
 }
