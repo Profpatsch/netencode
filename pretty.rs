@@ -28,13 +28,8 @@ impl Pretty {
     pub fn from_u<'a>(u: U<'a>) -> Pretty {
         match u {
             U::Unit => Self::scalar('u', "", ""),
-            U::N1(b) => Self::scalar('n', "1:", if b { "1" } else { "0" }),
-            U::N3(n) => Self::scalar('n', "3:", n),
-            U::N6(n) => Self::scalar('n', "6:", n),
-            U::N7(n) => Self::scalar('n', "7:", n),
-            U::I3(i) => Self::scalar('i', "3:", i),
-            U::I6(i) => Self::scalar('i', "6:", i),
-            U::I7(i) => Self::scalar('i', "7:", i),
+            U::N(n) => Self::scalar('n', ":", n),
+            U::I(i) => Self::scalar('i', ":", i),
             U::Text(s) => Pretty::Single {
                 r#type: 't',
                 length: format!("{}:", s.len()),

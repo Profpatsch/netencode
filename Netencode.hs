@@ -15,12 +15,12 @@ import Data.ByteString.Lazy qualified as ByteString.Lazy
 import Data.Fix (Fix (Fix))
 import Data.Fix qualified as Fix
 import Data.Functor.Classes (Eq1 (liftEq))
-import Data.Int (Int16, Int32, Int64, Int8)
+import Data.Int (Int64)
 import Data.Map.NonEmpty (NEMap)
 import Data.Map.NonEmpty qualified as NEMap
 import Data.Semigroup qualified as Semi
 import Data.String (IsString)
-import Data.Word (Word16, Word32, Word64)
+import Data.Word (Word64)
 import GHC.Exts (fromString)
 import Hedgehog qualified as Hedge
 import Hedgehog.Gen qualified as Gen
@@ -34,14 +34,10 @@ import Prelude hiding (sum)
 data TF rec
   = -- | Unit value
     Unit
-  | -- | Boolean (2^1)
-    N1 Bool
-  | -- | Byte (2^3)
-    N3 Word8
-  | -- | 64-bit Natural (2^6)
-    N6 Word64
-  | -- | 64-bit Integer (2^6)
-    I6 Int64
+  | -- | 64-bit Natural
+    N Word64
+  | -- | 64-bit Integer
+    I Int64
   | -- | Unicode Text
     Text Text
   | -- | Arbitrary Bytestring
@@ -56,10 +52,8 @@ data TF rec
 
 instance Eq1 TF where
   liftEq _ Unit Unit = True
-  liftEq _ (N1 b) (N1 b') = b == b'
-  liftEq _ (N3 w8) (N3 w8') = w8 == w8'
-  liftEq _ (N6 w64) (N6 w64') = w64 == w64'
-  liftEq _ (I6 i64) (I6 i64') = i64 == i64'
+  liftEq _ (N w64) (N w64') = w64 == w64'
+  liftEq _ (I i64) (I i64') = i64 == i64'
   liftEq _ (Text t) (Text t') = t == t'
   liftEq _ (Bytes b) (Bytes b') = b == b'
   liftEq eq (Sum t) (Sum t') = eq (t.tagVal) (t'.tagVal)
@@ -85,21 +79,18 @@ newtype T = T {unT :: Fix TF}
 unit :: T
 unit = T $ Fix Unit
 
--- | Create a boolean
-n1 :: Bool -> T
-n1 = T . Fix . N1
-
--- | Create a byte
-n3 :: Word8 -> T
-n3 = T . Fix . N3
+-- | Create a boolean as a tagged unit
+bool :: Bool -> T
+bool False = tag "false" unit
+bool True = tag "true" unit
 
 -- | Create a 64-bit natural
-n6 :: Word64 -> T
-n6 = T . Fix . N6
+n :: Word64 -> T
+n = T . Fix . N
 
 -- | Create a 64-bit integer
-i6 :: Int64 -> T
-i6 = T . Fix . I6
+i :: Int64 -> T
+i = T . Fix . I
 
 -- | Create a UTF-8 unicode text
 text :: Text -> T
@@ -135,11 +126,8 @@ netencodeEncodeStableF inner tf = builder go
     innerBL = fromBuilder . inner
     go = case tf of
       Unit -> "u,"
-      N1 False -> "n1:0,"
-      N1 True -> "n1:1,"
-      N3 w8 -> "n3:" <> fromBuilder (Builder.word8Dec w8) <> ","
-      N6 w64 -> "n6:" <> fromBuilder (Builder.word64Dec w64) <> ","
-      I6 i64 -> "i6:" <> fromBuilder (Builder.int64Dec i64) <> ","
+      N w64 -> "n:" <> fromBuilder (Builder.word64Dec w64) <> ","
+      I i64 -> "i:" <> fromBuilder (Builder.int64Dec i64) <> ","
       Text t ->
         let b = fromText t
          in "t" <> builderLenDec b <> ":" <> b <> ","
@@ -233,8 +221,8 @@ netencodeParserF inner = do
     '<' -> Sum <$> tagParser
     '{' -> Record <$> recordParser
     '[' -> List <$> listParser
-    'n' -> naturalParser
-    'i' -> I6 <$> intParser
+    'n' -> N <$> naturalParser
+    'i' -> I <$> intParser
     c -> fail ([c] <> " is not a valid netencode tag")
   where
     bytesParser = do
@@ -297,67 +285,28 @@ netencodeParserF inner = do
       pure list'
 
     intParser = do
-      let p :: forall parseSize. (Bounded parseSize, Integral parseSize) => (Integer -> Atto.Parser Int64)
-          p n = do
-            _ <- Atto.Char.char ':' Atto.<?> [fmt|i{n & show} did not have : after length|]
-            isNegative <- Atto.option False (Atto.Char.char '-' <&> \_c -> True)
-            int <-
-              boundedDecimal @parseSize >>= \case
-                Nothing -> fail [fmt|cannot parse into i{n & show}, the number is too big (would overflow)|]
-                Just i ->
-                  pure $
-                    if isNegative
-                      then -- TODO: this should alread be done in the decimal parser, @minBound@ cannot be parsed cause it’s one more than @(-maxBound)@!
-                        (-i)
-                      else i
-            _ <- Atto.Char.char ',' Atto.<?> [fmt|i{n & show} did not end with ,|]
-            pure $ fromIntegral @parseSize @Int64 int
-      digit <- Atto.Char.digit
-      case digit of
-        -- TODO: separate parser for i1 and i2 that makes sure the boundaries are right!
-        '1' -> p @Int8 1
-        '2' -> p @Int8 2
-        '3' -> p @Int8 3
-        '4' -> p @Int16 4
-        '5' -> p @Int32 5
-        '6' -> p @Int64 6
-        '7' -> fail [fmt|i parser only supports numbers up to size 6, was 7|]
-        '8' -> fail [fmt|i parser only supports numbers up to size 6, was 8|]
-        '9' -> fail [fmt|i parser only supports numbers up to size 6, was 9|]
-        o -> fail [fmt|i number with length {o & show} not possible|]
+      _ <- Atto.Char.char ':' Atto.<?> "i did not have : after type tag"
+      isNegative <- Atto.option False (Atto.Char.char '-' <&> \_c -> True)
+      int <-
+        boundedDecimal @Int64 >>= \case
+          Nothing -> fail "cannot parse into i, the number is too big (would overflow)"
+          Just int' ->
+            pure $
+              if isNegative
+                then -- TODO: this should already be done in the decimal parser, @minBound@ cannot be parsed cause it's one more than @(-maxBound)@!
+                  (-int')
+                else int'
+      _ <- Atto.Char.char ',' Atto.<?> "i did not end with ,"
+      pure int
 
     naturalParser = do
-      let p :: forall parseSize finalSize. (Bounded parseSize, Integral parseSize, Num finalSize) => (Integer -> Atto.Parser finalSize)
-          p n = do
-            _ <- Atto.Char.char ':' Atto.<?> [fmt|n{n & show} did not have : after length|]
-            int <-
-              boundedDecimal @parseSize >>= \case
-                Nothing -> fail [fmt|cannot parse into n{n & show}, the number is too big (would overflow)|]
-                Just i -> pure i
-
-            _ <- Atto.Char.char ',' Atto.<?> [fmt|n{n & show} did not end with ,|]
-            pure $ fromIntegral @parseSize @finalSize int
-      let b n = do
-            _ <- Atto.Char.char ':' Atto.<?> [fmt|n{n & show} did not have : after length|]
-            bool <-
-              (Atto.Char.char '0' >> pure False)
-                <|> (Atto.Char.char '1' >> pure True)
-            _ <- Atto.Char.char ',' Atto.<?> [fmt|n{n & show} did not end with ,|]
-            pure bool
-
-      digit <- Atto.Char.digit
-      case digit of
-        -- TODO: separate parser for n1 and n2 that makes sure the boundaries are right!
-        '1' -> N1 <$> b 1
-        '2' -> N3 <$> p @Word8 @Word8 2
-        '3' -> N3 <$> p @Word8 @Word8 3
-        '4' -> N6 <$> p @Word16 @Word64 4
-        '5' -> N6 <$> p @Word32 @Word64 5
-        '6' -> N6 <$> p @Word64 @Word64 6
-        '7' -> fail [fmt|n parser only supports numbers up to size 6, was 7|]
-        '8' -> fail [fmt|n parser only supports numbers up to size 6, was 8|]
-        '9' -> fail [fmt|n parser only supports numbers up to size 6, was 9|]
-        o -> fail [fmt|n number with length {o & show} not possible|]
+      _ <- Atto.Char.char ':' Atto.<?> "n did not have : after type tag"
+      natural <-
+        boundedDecimal @Word64 >>= \case
+          Nothing -> fail "cannot parse into n, the number is too big (would overflow)"
+          Just n -> pure n
+      _ <- Atto.Char.char ',' Atto.<?> "n did not end with ,"
+      pure natural
 
 -- | Parser for a bounded decimal that does not overflow the decimal.
 --
@@ -395,10 +344,8 @@ genNetencode =
     [ -- these are bundled into one Gen, so that scalar elements get chosen less frequently, and the generator produces nicely nested examples
       Gen.frequency
         [ (1, pure unit),
-          (1, n1 <$> Gen.bool),
-          (1, n3 <$> Gen.element [0, 1, 5]),
-          (1, n6 <$> Gen.element [0, 1, 5]),
-          (1, i6 <$> Gen.element [-1, 1, 5]),
+          (1, n <$> Gen.element [0, 1, 5]),
+          (1, i <$> Gen.element [-1, 1, 5]),
           (2, text <$> Gen.text (Range.linear 1 10) Gen.lower),
           (2, bytes <$> Gen.bytes (Range.linear 1 10))
         ]
