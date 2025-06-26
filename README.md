@@ -23,8 +23,12 @@ echo "Alice,30" | cut -d',' -f1  # Fragile CSV parsing
 echo "Alice 30" | awk '{print $1}'  # Whitespace assumptions
 
 # Netencode handles structure naturally:
-echo '{25:<4:name|t5:Alice,<3:age|n:30,}' | ne-get name
+echo '{25:<4:name|t5:Alice,<3:age|n:30,}' | record-get name
 # Outputs: t5:Alice,
+
+# Convert netencode values to plain text for shell use:
+echo '{25:<4:name|t5:Alice,<3:age|n:30,}' | record-get name | netencode-plain
+# Outputs: Alice
 ```
 
 ## Netencode vs JSON
@@ -153,8 +157,8 @@ cat > app.config << 'EOF'
 EOF
 
 # Extract configuration values for shell scripts:
-HOST=$(cat app.config | record-get host | sed 's/^t[0-9]*://' | sed 's/,$//')
-PORT=$(cat app.config | record-get port | sed 's/^n://' | sed 's/,$//')
+HOST=$(cat app.config | record-get host | netencode-plain)
+PORT=$(cat app.config | record-get port | netencode-plain)
 echo "Starting server on $HOST:$PORT"
 ```
 
@@ -180,8 +184,8 @@ curl -s api/source.json |
   netencode-filter status=active |    # Filter active records
   while read -r record; do
     # Extract fields and transform
-    NAME=$(echo "$record" | record-get name | sed 's/^t[0-9]*://' | sed 's/,$//')
-    EMAIL=$(echo "$record" | record-get email | sed 's/^t[0-9]*://' | sed 's/,$//')
+    NAME=$(echo "$record" | record-get name | netencode-plain)
+    EMAIL=$(echo "$record" | record-get email | netencode-plain)
     # Output in netencode format for next stage
     echo "{$(( ${#NAME} + ${#EMAIL} + 25 )):<4:user|t${#NAME}:${NAME},<5:email|t${#EMAIL}:${EMAIL},}"
   done
@@ -317,6 +321,35 @@ So if your max length is 1024 bytes, your length field can be a maximum `count_d
 Thus, if you restrict your parser to a length field of 4 bytes,
 it should also never parse anything longer than 1024 bytes for the value
 (plus 1 byte for the type tag, 4 bytes for the length, and 2 bytes for the separator & ending character).
+
+## CLI Tools
+
+The netencode ecosystem provides several command-line tools for working with data pipelines:
+
+### Core Tools
+- **`json-to-netencode`**: Convert JSON to netencode format for pipeline processing
+- **`record-get <field>`**: Extract a field from a netencode record
+- **`netencode-plain`**: Convert scalar netencode values to plain text (eliminates the need for sed patterns)
+- **`netencode-filter <field>=<value>`**: Filter netencode records by field values
+- **`netencode-pretty`**: Pretty-print netencode for human reading
+
+### Environment Integration
+- **`env-splice-record`**: Convert environment variables to a netencode record
+- **`record-splice-env <command>`**: Execute command with record fields as environment variables
+
+### Template Processing
+- **`netencode-mustache`**: Mustache template rendering with netencode data
+
+### Example Usage Pipeline
+```bash
+# Complete data processing pipeline
+curl -s api/users.json |
+  json-to-netencode |              # JSON → netencode
+  netencode-filter active=true |   # Filter records  
+  record-get name |                # Extract field
+  netencode-plain                  # Convert to plain text
+# Output: Alice
+```
 
 ## motivation
 

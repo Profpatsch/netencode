@@ -45,6 +45,31 @@ class TestReadmeExamples:
         # Should extract name field
         assert result.stdout.strip() == 't5:Alice,'
     
+    def test_basic_record_field_extraction_with_plain(self, sample_records):
+        """Test extracting name field and converting to plain text - README example."""
+        # Test the exact example: echo '{...}' | record-get name | netencode-plain
+        record = sample_records['alice_age']
+        field_result = run_tool('record-get', 'name', stdin=record)
+        plain_result = run_tool('netencode-plain', stdin=field_result.stdout)
+        
+        # Should extract name as plain text
+        assert plain_result.stdout == 'Alice'
+    
+    def test_configuration_extraction_with_plain(self):
+        """Test configuration example from README with netencode-plain."""
+        # README example: Extract HOST and PORT from config
+        config = '{55:<4:host|t9:localhost,<4:port|n:8080,<5:debug|<4:true|u,}'
+        
+        # Extract host and convert to plain
+        host_field = run_tool('record-get', 'host', stdin=config)
+        host_plain = run_tool('netencode-plain', stdin=host_field.stdout)
+        assert host_plain.stdout == 'localhost'
+        
+        # Extract port and convert to plain  
+        port_field = run_tool('record-get', 'port', stdin=config)
+        port_plain = run_tool('netencode-plain', stdin=port_field.stdout)
+        assert port_plain.stdout == '8080'
+    
     def test_environment_integration_with_record_splice_env(self, sample_records):
         """Test the echo example from README."""
         record = sample_records['alice_age']
@@ -138,6 +163,29 @@ class TestReadmeExamples:
         # Should extract correct values in netencode format
         assert 'Alice' in name
         assert 'alice@example.com' in email
+    
+    def test_complete_pipeline_with_plain_output(self):
+        """Test the complete pipeline example from README CLI Tools section."""
+        # Use individual records as input (like streaming from an API) rather than an array
+        alice_json = '{"name": "Alice", "active": true}'
+        bob_json = '{"name": "Bob", "active": false}'
+        
+        # Convert each to netencode
+        alice_ne = run_tool('json-to-netencode', stdin=alice_json).stdout.strip()
+        bob_ne = run_tool('json-to-netencode', stdin=bob_json).stdout.strip()
+        input_stream = f"{alice_ne}\n{bob_ne}"
+        
+        # Filter active users  
+        filtered_data = run_tool('netencode-filter', 'active=true', stdin=input_stream)
+        
+        # Extract name field from filtered result
+        name_field = run_tool('record-get', 'name', stdin=filtered_data.stdout.strip())
+        
+        # Convert to plain text
+        plain_name = run_tool('netencode-plain', stdin=name_field.stdout)
+        
+        # Should get Alice as plain text
+        assert plain_name.stdout == 'Alice'
     
     def test_type_safety_naturals_vs_integers(self):
         """Test that netencode distinguishes number types correctly."""

@@ -321,6 +321,67 @@ let
     }
   '';
 
+  netencode-plain = rust-writers.rustSimple
+    {
+      name = "netencode-plain";
+      dependencies = [
+        netencode-rs
+        exec-helpers.exec-helpers-rs
+      ];
+    } ''
+    extern crate netencode;
+    extern crate exec_helpers;
+    use netencode::{encode};
+    use std::io::{self, Write};
+
+    fn main() {
+        exec_helpers::no_args("netencode-plain");
+        let t = netencode::t_from_stdin_or_die_user_error("netencode-plain");
+        
+        match t.to_u() {
+            // Text values - output raw text content
+            netencode::U::Text(s) => {
+                print!("{}", s);
+            },
+            // Natural numbers - output as decimal
+            netencode::U::N(n) => {
+                print!("{}", n);
+            },
+            // Signed integers - output as decimal  
+            netencode::U::I(i) => {
+                print!("{}", i);
+            },
+            // Binary data - output raw bytes
+            netencode::U::Binary(bytes) => {
+                io::stdout().write_all(bytes).unwrap();
+            },
+            // Tagged values - handle booleans, pass through others
+            netencode::U::Sum(tag) => {
+                match (tag.tag.as_ref(), tag.val.as_ref()) {
+                    ("true", netencode::U::Unit) => {
+                        print!("true");
+                    },
+                    ("false", netencode::U::Unit) => {
+                        print!("false");
+                    },
+                    // For other tagged values, output the original netencode
+                    _ => {
+                        encode(&mut std::io::stdout(), &t.to_u()).expect("encoding to stdout failed");
+                    }
+                }
+            },
+            // Records and Lists - pass through verbatim
+            netencode::U::Record(_) | netencode::U::List(_) => {
+                encode(&mut std::io::stdout(), &t.to_u()).expect("encoding to stdout failed");
+            },
+            // Unit - output nothing (empty)
+            netencode::U::Unit => {
+                // Output nothing for unit values
+            }
+        }
+    }
+  '';
+
 in
 {
   inherit
@@ -334,6 +395,7 @@ in
     env-splice-record
     json-to-netencode
     netencode-filter
+    netencode-plain
     gen
     ;
 }

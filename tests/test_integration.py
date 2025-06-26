@@ -276,3 +276,76 @@ class TestEdgeCases:
         # This should handle by taking first = as separator
         result = run_tool('netencode-filter', 'field=value=extra', stdin=ne_record)
         assert result.returncode == 0
+
+
+class TestNetencodePlain:
+    """Test the netencode-plain tool for extracting scalar values."""
+
+    def test_text_values(self):
+        """Test that text values are output as plain text."""
+        result = run_tool("netencode-plain", stdin="t5:Alice,")
+        assert result.stdout == "Alice"
+
+    def test_natural_numbers(self):
+        """Test that natural numbers are output as decimal."""
+        result = run_tool("netencode-plain", stdin="n:42,")
+        assert result.stdout == "42"
+
+    def test_signed_integers(self):
+        """Test that signed integers are output as decimal."""
+        result = run_tool("netencode-plain", stdin="i:-10,")
+        assert result.stdout == "-10"
+
+    def test_boolean_true(self):
+        """Test that boolean true is output as 'true'."""
+        result = run_tool("netencode-plain", stdin="<4:true|u,")
+        assert result.stdout == "true"
+
+    def test_boolean_false(self):
+        """Test that boolean false is output as 'false'."""
+        result = run_tool("netencode-plain", stdin="<5:false|u,")
+        assert result.stdout == "false"
+
+    def test_record_passthrough(self):
+        """Test that records pass through unchanged."""
+        # Generated from: echo '{"name": "Alice", "age": 30}' | json-to-netencode
+        input_record = "{29:<3:age|i:30,<4:name|t5:Alice,}"
+        result = run_tool("netencode-plain", stdin=input_record)
+        assert result.stdout == input_record
+
+    def test_list_passthrough(self):
+        """Test that lists pass through unchanged."""
+        # Generated from: echo '["Alice", 30]' | json-to-netencode
+        input_list = "[14:t5:Alice,i:30,]"
+        result = run_tool("netencode-plain", stdin=input_list)
+        assert result.stdout == input_list
+
+    def test_text_value_extraction(self):
+        """Test that text values are extracted from records."""
+        # Test extracting a text field and converting to plain
+        # Generated from: echo '{"status": "active"}' | json-to-netencode | record-get status
+        text_value = "t6:active,"
+        result = run_tool("netencode-plain", stdin=text_value)
+        assert result.stdout == "active"
+
+    def test_unit_value(self):
+        """Test that unit values produce no output."""
+        result = run_tool("netencode-plain", stdin="u,")
+        assert result.stdout == ""
+
+    def test_pipeline_with_json_conversion(self):
+        """Test netencode-plain in a pipeline with JSON conversion."""
+        json_input = '"Hello, World!"'
+        
+        # Convert JSON to netencode, then extract plain value
+        json_to_ne = run_tool("json-to-netencode", stdin=json_input)
+        plain_result = run_tool("netencode-plain", stdin=json_to_ne.stdout)
+        
+        assert plain_result.stdout == "Hello, World!"
+
+    def test_binary_data_passthrough(self):
+        """Test that binary data is output as raw bytes."""
+        # Create some binary data
+        binary_input = "b5:hello,"
+        result = run_tool("netencode-plain", stdin=binary_input)
+        assert result.stdout == "hello"

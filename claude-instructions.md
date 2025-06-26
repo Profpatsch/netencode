@@ -24,6 +24,7 @@ The integration tests require the netencode tools to be built via nix-build:
 # Build the tools (pytest will find them automatically)
 nix-build -A json-to-netencode
 nix-build -A netencode-filter
+nix-build -A netencode-plain
 nix-build -A record-get
 nix-build -A env-splice-record
 nix-build -A record-splice-env

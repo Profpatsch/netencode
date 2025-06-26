@@ -17,6 +17,7 @@ in pkgs.mkShell {
     # All the netencode tools
     netencode.json-to-netencode
     netencode.netencode-filter
+    netencode.netencode-plain
     netencode.record-get
     netencode.env-splice-record
     netencode.record-splice-env
@@ -33,6 +34,7 @@ in pkgs.mkShell {
     # Export tool paths for both BATS and Python tests
     export JSON_TO_NETENCODE="$(which json-to-netencode)"
     export NETENCODE_FILTER="$(which netencode-filter)"
+    export NETENCODE_PLAIN="$(which netencode-plain)"
     export RECORD_GET="$(which record-get)"
     export ENV_SPLICE_RECORD="$(which env-splice-record)"
     export RECORD_SPLICE_ENV="$(which record-splice-env)"
@@ -41,6 +43,7 @@ in pkgs.mkShell {
     echo "Available netencode tools:"
     echo "  json-to-netencode: $JSON_TO_NETENCODE"
     echo "  netencode-filter: $NETENCODE_FILTER"
+    echo "  netencode-plain: $NETENCODE_PLAIN"
     echo "  record-get: $RECORD_GET"
     echo "  env-splice-record: $ENV_SPLICE_RECORD"
     echo "  record-splice-env: $RECORD_SPLICE_ENV"
