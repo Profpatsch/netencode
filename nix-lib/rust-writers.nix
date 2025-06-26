@@ -38,7 +38,6 @@ let
     { name
     , dependencies ? [ ]
     , doCheck ? true
-    ,
     }: src:
     (if doCheck then testRustSimple else pkgs.lib.id)
       (pkgs.buildRustCrate ({
@@ -72,6 +71,7 @@ let
       crate = buildTests: rustDrv.override { inherit buildTests; };
       tests = pkgs.runCommandLocal "${rustDrv.name}-tests-run" { }
         ''
+          set -euo pipefail
           for test in $(find "${crate true}/tests" -type f -name "*.rs"); do
             echo "Running test $test"
             ${crate true}/tests/$test

@@ -219,18 +219,28 @@ pub fn t_from_stdin_or_die_user_error_with_rest<'a>(
                     exec_helpers::die_user_error(
                         prog_name,
                         &format!(
-                            "unable to parse netencode from stdin, input incomplete: {:?}",
-                            parser_vec
+                            "unable to parse netencode from stdin, input incomplete: {}",
+                            String::from_utf8_lossy(&parser_vec)
                         ),
                     );
                 }
                 // read more from stdin and try parsing again
                 continue;
             }
-            Err(err) => exec_helpers::die_user_error(
-                prog_name,
-                &format!("unable to parse netencode from stdin: {:?}", err),
-            ),
+            Err(err) => {
+                let error_msg = match &err {
+                    nom::Err::Error((input, kind)) | nom::Err::Failure((input, kind)) => {
+                        format!("Parse error at: '{}' (kind: {:?})", String::from_utf8_lossy(input), kind)
+                    }
+                    nom::Err::Incomplete(_) => {
+                        format!("Incomplete input: {:?}", err)
+                    }
+                };
+                exec_helpers::die_user_error(
+                    prog_name,
+                    &format!("unable to parse netencode from stdin: {}", error_msg),
+                );
+            },
         }
     }
 }
