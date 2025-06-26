@@ -11,9 +11,8 @@ netencode-pretty - Format netencode data for human readability
 # DESCRIPTION
 
 *netencode-pretty* reads netencode data from standard input and formats it 
-with proper indentation and line breaks for human readability. The output 
-is still valid netencode but presented in a multi-line format that makes 
-the structure easier to understand.
+as human-readable text with proper indentation and line breaks for debugging 
+and inspection purposes.
 
 This tool is essential for debugging netencode data streams and understanding 
 the structure of complex nested data.
@@ -29,12 +28,10 @@ input must be valid netencode format.
 
 # OUTPUT
 
-The tool outputs the same netencode data formatted with:
+The tool outputs human-readable formatted text (not valid netencode) with:
 - Proper indentation for nested structures
 - Line breaks between record fields and list elements  
 - Consistent spacing for readability
-
-The output remains valid netencode that can be processed by other tools.
 
 # EXIT STATUS
 
@@ -58,10 +55,10 @@ Format nested structures:
 echo '[42:{12:<4:name|t3:foo,}{12:<4:name|t3:bar,}]' | netencode-pretty
 ```
 
-Use in a pipeline to debug data flow:
+Use to inspect data during pipeline development:
 
 ```
-some-data-source | netencode-pretty | tee formatted.netencode | next-step
+some-data-source | tee >(netencode-pretty >&2) | next-step
 ```
 
 # SEE ALSO

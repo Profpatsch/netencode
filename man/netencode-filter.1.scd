@@ -89,13 +89,13 @@ json-to-netencode < api-data.json |
   netencode-plain
 ```
 
-Process streaming data:
+Process streaming data with inspection:
 
 ```
 tail -f application.log |
   json-to-netencode |
   netencode-filter severity=critical |
-  netencode-pretty
+  tee >(netencode-pretty >&2)
 ```
 
 # NOTES
