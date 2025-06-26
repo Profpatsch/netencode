@@ -180,14 +180,43 @@ let
     name = "netencode-man";
     src = exact-source ./. [
       ./man/netencode.5.scd
+      ./man/netencode-pretty.1.scd
+      ./man/record-get.1.scd
+      ./man/record-splice-env.1.scd
+      ./man/env-splice-record.1.scd
+      ./man/json-to-netencode.1.scd
+      ./man/netencode-filter.1.scd
+      ./man/netencode-plain.1.scd
+      ./man/netencode-mustache.1.scd
     ];
     nativeBuildInputs = [ pkgs.scdoc ];
     buildPhase = ''
+      # Generate man pages from scdoc sources
       scdoc < man/netencode.5.scd > netencode.5
+      scdoc < man/netencode-pretty.1.scd > netencode-pretty.1
+      scdoc < man/record-get.1.scd > record-get.1
+      scdoc < man/record-splice-env.1.scd > record-splice-env.1
+      scdoc < man/env-splice-record.1.scd > env-splice-record.1
+      scdoc < man/json-to-netencode.1.scd > json-to-netencode.1
+      scdoc < man/netencode-filter.1.scd > netencode-filter.1
+      scdoc < man/netencode-plain.1.scd > netencode-plain.1
+      scdoc < man/netencode-mustache.1.scd > netencode-mustache.1
     '';
     installPhase = ''
-      mkdir -p $out/share/man/man5
+      mkdir -p $out/share/man/man1 $out/share/man/man5
+      
+      # Install section 5 (file formats)
       cp netencode.5 $out/share/man/man5/
+      
+      # Install section 1 (commands)
+      cp netencode-pretty.1 $out/share/man/man1/
+      cp record-get.1 $out/share/man/man1/
+      cp record-splice-env.1 $out/share/man/man1/
+      cp env-splice-record.1 $out/share/man/man1/
+      cp json-to-netencode.1 $out/share/man/man1/
+      cp netencode-filter.1 $out/share/man/man1/
+      cp netencode-plain.1 $out/share/man/man1/
+      cp netencode-mustache.1 $out/share/man/man1/
     '';
   };
 
