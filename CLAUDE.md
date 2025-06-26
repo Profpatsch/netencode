@@ -115,3 +115,8 @@ to create comprehensive guidance file for Claude Code.
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
+
+### Commit Guidelines
+- Wrap commit line lengths at around 70 characters
+- For commit messages, make the first line less than 70 characters long
+- Use little bullet points in the extended message and no flowery language
