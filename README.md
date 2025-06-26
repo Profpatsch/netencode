@@ -242,9 +242,11 @@ UTF-8 encoded text with byte-length prefix.
 
 Arbitrary byte sequences with length prefix. No escaping required.
 
-* The ASCII string `hello world` as binary data (11 bytes): `b11:hello world,`
-* The empty binary string (0 bytes): `b0:,`
-* The bytestring with `^D` (1 byte): `b1:,`
+| Format | Examples |
+|--------|----------|
+| `b[size]:[data],` | `b11:hello world,` |
+| | `b0:,` (empty binary string) |
+| | `b1:,` (contains `^D` byte) |
 
 Since the binary strings are length-prefixd, they can contain `\0` and no escaping is required. Care has to be taken in languages with `\0`-terminated bytestrings.
 
@@ -290,6 +292,8 @@ Similar to records, lists start with the length of their whole encoded content.
 * The list with one element, the string `foo`: `[7:t3:foo,]`
 * The list with text `foo` followed by integer `-42`: `[13:t3:foo,i:-42,]`
 * The list with `Some` and `None` tags: `[33:<4:Some|t3:foo,<4None|u,<4None|u,]`
+
+**Note on Empty Lists**: The empty list `[0:]` is essentially equivalent to the unit type in terms of information content, but we maintain it as a distinct construct because it's valuable for filtering operations and interoperability with systems that distinguish between "no value" and "empty collection".
 
 ## parser security considerations
 
