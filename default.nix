@@ -426,9 +426,38 @@ let
     }
   '';
 
+  netencode = pkgs.symlinkJoin {
+    name = "netencode";
+    paths = [
+      pretty
+      netencode-mustache
+      record-get
+      record-splice-env
+      env-splice-record
+      json-to-netencode
+      netencode-filter
+      netencode-plain
+      netencode-man
+    ];
+    meta = {
+      description = "Length-prefixed, type-safe data serialization format and CLI tools";
+      longDescription = ''
+        Netencode is a data serialization format inspired by bencode and netstring.
+        It provides type-safe, length-prefixed encoding that is both human-readable
+        for debugging and machine-efficient for parsing.
+        
+        This package includes all CLI tools for working with netencode data:
+        processing, filtering, converting, and debugging structured data in Unix pipelines.
+      '';
+      homepage = "https://github.com/openlab-aux/netencode";
+      license = pkgs.lib.licenses.mit;
+    };
+  };
+
 in
 {
   inherit
+    netencode
     netencode-rs
     netencode-hs
     pretty-rs

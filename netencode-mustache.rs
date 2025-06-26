@@ -10,18 +10,19 @@ use std::os::unix::ffi::OsStrExt;
 
 fn netencode_to_mustache_data_dwim(t: T) -> Data {
     match t {
-        // TODO: good idea?
         T::Unit => Data::Null,
-        T::N1(b) => Data::Bool(b),
-        T::N3(u) => Data::String(u.to_string()),
-        T::N6(u) => Data::String(u.to_string()),
-        T::N7(u) => Data::String(u.to_string()),
-        T::I3(i) => Data::String(i.to_string()),
-        T::I6(i) => Data::String(i.to_string()),
-        T::I7(i) => Data::String(i.to_string()),
+        T::N(u) => Data::String(u.to_string()),
+        T::I(i) => Data::String(i.to_string()),
         T::Text(s) => Data::String(s),
-        T::Binary(b) => unimplemented!(),
-        T::Sum(tag) => unimplemented!(),
+        T::Binary(_) => unimplemented!("Binary data not supported in mustache templates"),
+        T::Sum(tag) => {
+            // Handle booleans as special case
+            match (tag.tag.as_str(), tag.val.as_ref()) {
+                ("true", T::Unit) => Data::Bool(true),
+                ("false", T::Unit) => Data::Bool(false),
+                _ => unimplemented!("Complex tagged values not supported in mustache templates"),
+            }
+        },
         T::Record(xs) => Data::Map(
             xs.into_iter()
                 .map(|(key, val)| (key, netencode_to_mustache_data_dwim(val)))
