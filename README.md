@@ -371,6 +371,5 @@ Netencode bridges the gap between human-readable and machine-efficient data form
 
 TODO: do I want unique representation (bijection like bencode?) This would put more restrictions on the generator, like sorting records in lexicographic order, but would make it possible to compare without decoding
 
-
 [bencode]: https://en.wikipedia.org/wiki/Bencode
 [netstring]: https://en.wikipedia.org/wiki/Netstring

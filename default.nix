@@ -176,6 +176,21 @@ let
     }
   '';
 
+  netencode-man = pkgs.stdenv.mkDerivation {
+    name = "netencode-man";
+    src = exact-source ./. [
+      ./man/netencode.5.scd
+    ];
+    nativeBuildInputs = [ pkgs.scdoc ];
+    buildPhase = ''
+      scdoc < man/netencode.5.scd > netencode.5
+    '';
+    installPhase = ''
+      mkdir -p $out/share/man/man5
+      cp netencode.5 $out/share/man/man5/
+    '';
+  };
+
   json-to-netencode = rust-writers.rustSimple
     {
       name = "json-to-netencode";
@@ -396,6 +411,7 @@ in
     json-to-netencode
     netencode-filter
     netencode-plain
+    netencode-man
     gen
     ;
 }
