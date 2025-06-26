@@ -121,4 +121,4 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - For commit messages, make the first line less than 70 characters long
 - Use little bullet points in the extended message and no flowery language
 
-- When compacting your history, write a file to docs/ that is called `<date>_<time>_claude-compact.md` and contains the compacted history text
+- When compacting your history, write a file to docs/ that is called `<date>_<timestamp>_claude-compact.md` and contains the compacted history text
