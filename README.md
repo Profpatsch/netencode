@@ -1,6 +1,6 @@
 # netencode 0.1-unreleased
 
-[bencode][] and [netstring][]-inspired pipe format that should be trivial to generate correctly in every context (only requires a `byte_length()` and a `printf()`), easy to parse (100 lines of code or less), mostly human-decipherable for easy debugging, and support nested record and sum types.
+[bencode][] and [netstring][]-inspired pipe format that is trivial to generate correctly in every context (only requires a `byte_length()` and a `printf()`), easy to parse (100 lines of code or less), mostly human-decipherable for easy debugging, and supports nested record and sum types.
 
 ## Quick Start: Pipeline-Friendly Data Processing
 
@@ -148,20 +148,6 @@ curl -s https://api.github.com/users/octocat/repos | json-to-netencode | netenco
 curl -s https://api.github.com/users/octocat/repos | jq '.[] | select(.archived == false) | .name'
 ```
 
-### Configuration Management
-
-```bash
-# netencode config file (human-readable, machine-parseable):
-cat > app.config << 'EOF'
-{55:<4:host|t9:localhost,<4:port|n:8080,<5:debug|<4:true|u,}
-EOF
-
-# Extract configuration values for shell scripts:
-HOST=$(cat app.config | record-get host | netencode-plain)
-PORT=$(cat app.config | record-get port | netencode-plain)
-echo "Starting server on $HOST:$PORT"
-```
-
 ### Log Processing Pipeline
 
 ```bash
@@ -238,11 +224,12 @@ Represented as tagged unit values (see Tagged Values section below).
 
 | Value | Format | Description |
 |-------|--------|-------------|
-| **true** | `<4:true|u,` | Boolean true as tagged unit |
-| **false** | `<5:false|u,` | Boolean false as tagged unit |
+| **true** | `<4:true\|u,` | Boolean true as tagged unit |
+| **false** | `<5:false\|u,` | Boolean false as tagged unit |
 
 ### Text Strings
 UTF-8 encoded text with byte-length prefix.
+
 
 | Format | Examples |
 |--------|----------|
@@ -283,7 +270,7 @@ Ordering of tags in a record does not matter.
 
 Similar to text, records start with the length of their *whole encoded content*, in bytes. This makes it possible to treat their contents as opaque bytestrings.
 
-* There is no empty record. (TODO: make the empty record the unit type, remove `u,`?)
+* There is no empty record.
 * A record with one empty field, `foo`: `{9:<3:foo|u,}`
 * A record with two fields, `foo` and `x`: `{21:<3:foo|u,<1:x|t3:baz,}`
 * The same record: `{21:<1:x|t3:baz,<3:foo|u,}`
@@ -299,7 +286,7 @@ A list (`[`) imposes an ordering on a sequence of values. It needs to be closed 
 
 Similar to records, lists start with the length of their whole encoded content.
 
-* The empty list: `[0:]`
+* The empty list: `[0:]`.
 * The list with one element, the string `foo`: `[7:t3:foo,]`
 * The list with text `foo` followed by integer `-42`: `[13:t3:foo,i:-42,]`
 * The list with `Some` and `None` tags: `[33:<4:Some|t3:foo,<4None|u,<4None|u,]`
@@ -345,7 +332,7 @@ The netencode ecosystem provides several command-line tools for working with dat
 # Complete data processing pipeline
 curl -s api/users.json |
   json-to-netencode |              # JSON → netencode
-  netencode-filter active=true |   # Filter records  
+  netencode-filter active=true |   # Filter records
   record-get name |                # Extract field
   netencode-plain                  # Convert to plain text
 # Output: Alice
@@ -359,35 +346,22 @@ Netencode bridges the gap between human-readable and machine-efficient data form
 
 **Human-Readable Debugging**: Unlike MessagePack, Protocol Buffers, or other binary formats, you can visually inspect your data streams. When a pipeline breaks, you can see exactly what data is flowing through each stage.
 
+**Trivial Generation**: Only requires `byte_length()` and `printf()` - you can generate valid netencode in any language with these basic primitives.
+
 **Length-Prefixed Streaming**: Unlike JSON (which requires parsing the entire document to find boundaries), netencode uses length prefixes that allow efficient streaming and incremental parsing. You know exactly how many bytes to read.
 
 **Type Safety**: Every value has an explicit type (`n:` for naturals, `t5:` for 5-byte text, etc.), eliminating the ambiguity found in formats like JSON where numbers might be integers or floats.
 
 **Shell-Friendly**: Designed for command-line tools and shell scripting. No escaping nightmares, no quote handling complexity, no parsing edge cases.
 
-**Trivial Generation**: Only requires `byte_length()` and `printf()` - you can generate valid netencode in any language with these basic primitives.
-
 **Minimal Parsing**: Complete parsers can be written in under 100 lines of code, making it easy to add netencode support to any tool.
-
-### Comparison with Alternatives
-
-| Format | Human Readable | Type Safe | Streaming | Shell Friendly | Parse Complexity |
-|--------|---------------|-----------|-----------|----------------|------------------|
-| **netencode** | ✓ | ✓ | ✓ | ✓ | Minimal |
-| JSON | ✓ | ✗ | ✗ | ✗ | Medium |
-| MessagePack | ✗ | ✓ | ✓ | ✗ | Medium |
-| Protocol Buffers | ✗ | ✓ | ✓ | ✗ | High |
-| CBOR | ✗ | ✓ | ✓ | ✗ | Medium |
-| Bencode | ✓ | ✗ | ✓ | ✗ | Low |
 
 ### Ideal Use Cases
 
 - **Data Pipelines**: Where you need to see what's happening at each stage
 - **Shell Scripting**: Processing structured data with standard Unix tools
 - **Log Processing**: Human-readable structured logs that are also machine-parseable
-- **Configuration Files**: Readable by humans, reliable for machines
 - **Inter-Process Communication**: When debugging is important
-- **API Development**: During development when you need to inspect payloads
 
 ## guarantees
 
