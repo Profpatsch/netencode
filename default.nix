@@ -1,7 +1,6 @@
-#{ depot, pkgs, lib, ... }:
+{ pkgs ? import <nixpkgs> { } }:
 
 let
-  pkgs = import <nixpkgs> { };
   lib = pkgs.lib;
   rust-writers = import ./nix-lib/rust-writers.nix { inherit pkgs lib drvSeqL; };
   rust-crates = import ./nix-lib/rust-crates.nix { inherit pkgs lib; };
@@ -449,7 +448,7 @@ let
         This package includes all CLI tools for working with netencode data:
         processing, filtering, converting, and debugging structured data in Unix pipelines.
       '';
-      homepage = "https://github.com/openlab-aux/netencode";
+      homepage = "https://github.com/Profpatsch/netencode";
       license = pkgs.lib.licenses.mit;
     };
   };
