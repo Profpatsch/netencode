@@ -17,8 +17,7 @@ The test suite is written in Python using pytest:
 
 Enter the test environment:
 ```bash
-cd tests/
-nix-shell
+nix-shell ./tests/shell.nix
 ```
 
 ### Running Tests
@@ -114,7 +113,7 @@ The tests use realistic netencode examples that match the actual tool output for
 The test environment sets up these variables for tool access:
 
 - `JSON_TO_NETENCODE` - Path to json-to-netencode tool
-- `NETENCODE_FILTER` - Path to netencode-filter tool  
+- `NETENCODE_FILTER` - Path to netencode-filter tool
 - `RECORD_GET` - Path to record-get tool
 - `ENV_SPLICE_RECORD` - Path to env-splice-record tool
 - `RECORD_SPLICE_ENV` - Path to record-splice-env tool

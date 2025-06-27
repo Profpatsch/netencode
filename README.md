@@ -196,6 +196,50 @@ curl -s api/source.json |
 - Streaming-friendly: You can parse incrementally without scanning for delimiters
 - Visually debuggable: Each component is clearly separated and typed
 
+## Using with Nix Flakes
+
+### Quick Try (No Installation Required)
+
+```bash
+# Pretty-print netencode data
+echo -n 't5:hello,' | nix run github:Profpatsch/netencode
+
+# The default app is netencode-pretty, but you can access others:
+echo -n 't5:hello,' | nix run github:Profpatsch/netencode#netencode-pretty
+```
+
+### Development Environment
+
+```bash
+# Enter development shell with all tools available
+nix develop
+
+# Now all CLI tools are in your PATH:
+echo -n 't5:hello,' | netencode-pretty
+echo -n 't5:hello,' | netencode-plain
+echo -n '{25:<4:name|t5:Alice,<3:age|n:30,}' | record-get name
+
+# Process data pipelines with full toolset
+curl -s api/users.json | json-to-netencode | netencode-filter active=true | record-get name | netencode-plain
+```
+
+### Available Flake Outputs
+
+- `packages.default` / `packages.netencode`: Complete netencode package with all tools
+- `apps.default` / `apps.netencode-pretty`: Pretty-printer app for quick inspection
+- `devShells.default`: Development environment with all tools in PATH
+
+### Local Development
+
+```bash
+# Clone and enter development environment
+git clone https://github.com/Profpatsch/netencode
+cd netencode
+nix develop
+
+# All tools are now available for testing and development
+```
+
 ## Format Specification
 
 ## Scalar Types

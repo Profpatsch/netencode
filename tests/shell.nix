@@ -2,7 +2,7 @@
 
 let
   # Import the main netencode derivation
-  netencode = import ../default.nix;
+  netencode = import ../default.nix { inherit pkgs; };
   
   # Python environment with pytest
   pythonEnv = pkgs.python3.withPackages (ps: with ps; [
