@@ -1,7 +1,8 @@
 extern crate exec_helpers;
 extern crate nom;
+extern crate indexmap;
 
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use std::fmt::{Debug, Display};
 use std::io::{Read, Write};
 
@@ -23,7 +24,7 @@ pub enum T {
     // TODO: rename to Tag
     Sum(Tag<String, T>),
     // TODO: make into &str
-    Record(HashMap<String, T>),
+    Record(IndexMap<String, T>),
     List(Vec<T>),
 }
 
@@ -67,7 +68,7 @@ pub enum U<'a> {
     // Tags
     // TODO: rename to Tag
     Sum(Tag<&'a str, U<'a>>),
-    Record(HashMap<&'a str, U<'a>>),
+    Record(IndexMap<&'a str, U<'a>>),
     List(Vec<U<'a>>),
 }
 
@@ -92,7 +93,7 @@ impl<'a> U<'a> {
             U::Record(map) => T::Record(
                 map.iter()
                     .map(|(k, v)| ((*k).to_owned(), v.to_t()))
-                    .collect::<HashMap<String, T>>(),
+                    .collect::<IndexMap<String, T>>(),
             ),
             U::List(l) => T::List(l.iter().map(|v| v.to_t()).collect::<Vec<T>>()),
         }
@@ -276,9 +277,9 @@ impl<R: Read> Iterator for Chunkyboi<R> {
 
 pub mod parse {
     use super::{Tag, T, U};
+    use indexmap::IndexMap;
 
-    use std::collections::HashMap;
-    use std::ops::Neg;
+        use std::ops::Neg;
     use std::str::FromStr;
 
     use nom::branch::alt;
@@ -442,17 +443,17 @@ pub mod parse {
         )
     }
 
-    fn record_t<'a>(s: &'a [u8]) -> IResult<&'a [u8], HashMap<String, T>> {
+    fn record_t<'a>(s: &'a [u8]) -> IResult<&'a [u8], IndexMap<String, T>> {
         let (s, r) = record_g(t_t)(s)?;
         Ok((
             s,
             r.into_iter()
                 .map(|(k, v)| (k.to_string(), v))
-                .collect::<HashMap<_, _>>(),
+                .collect::<IndexMap<_, _>>(),
         ))
     }
 
-    fn record_g<'a, P, O>(inner: P) -> impl Fn(&'a [u8]) -> IResult<&'a [u8], HashMap<&'a str, O>>
+    fn record_g<'a, P, O>(inner: P) -> impl Fn(&'a [u8]) -> IResult<&'a [u8], IndexMap<&'a str, O>>
     where
         O: Clone,
         P: Fn(&'a [u8]) -> IResult<&'a [u8], O>,
@@ -462,8 +463,8 @@ pub mod parse {
                 sized('{', '}'),
                 nom::multi::fold_many0(
                     inner_no_empty_string(tag_g(&inner)),
-                    HashMap::new(),
-                    |mut acc: HashMap<_, _>, Tag { tag, mut val }| {
+                    IndexMap::new(),
+                    |mut acc: IndexMap<_, _>, Tag { tag, mut val }| {
                         // ignore earlier tags with the same name
                         // according to netencode spec
                         let _ = acc.insert(tag, *val);
@@ -644,7 +645,7 @@ pub mod parse {
                         ("c".to_owned(), T::Unit),
                     ]
                     .into_iter()
-                    .collect::<HashMap<String, T>>()
+                    .collect::<IndexMap<String, T>>()
                 )),
                 "{}",
                 r"{21:<1:a|u,<1:b|u,<1:c|u,}"
@@ -656,7 +657,7 @@ pub mod parse {
                     "".as_bytes(),
                     vec![("a".to_owned(), T::I(-1)), ("b".to_owned(), T::Unit),]
                         .into_iter()
-                        .collect::<HashMap<_, _>>()
+                        .collect::<IndexMap<_, _>>()
                 )),
                 "{}",
                 r"{24:<1:a|u,<1:b|u,<1:a|i:-1,}"
@@ -730,7 +731,7 @@ pub mod parse {
                             )
                         ]
                         .into_iter()
-                        .collect::<HashMap<String, T>>()
+                        .collect::<IndexMap<String, T>>()
                     )
                 )),
                 "{}",
@@ -742,8 +743,8 @@ pub mod parse {
 
 pub mod dec {
     use super::*;
-    use std::collections::HashMap;
-
+    use indexmap::IndexMap;
+    
     pub struct DecodeError(pub String);
 
     pub trait Decoder<'a> {
@@ -829,7 +830,7 @@ pub mod dec {
     where
         Inner: Decoder<'a>,
     {
-        type A = HashMap<&'a str, Inner::A>;
+        type A = IndexMap<&'a str, Inner::A>;
         fn dec(&self, u: U<'a>) -> Result<Self::A, DecodeError> {
             match u {
                 U::Record(map) => map
@@ -855,7 +856,7 @@ pub mod dec {
         type A = Inner::A;
         fn dec(&self, u: U<'a>) -> Result<Self::A, DecodeError> {
             match Record(self.inner.clone()).dec(u) {
-                Ok(mut map) => match map.remove(self.field) {
+                Ok(mut map) => match map.shift_remove(self.field) {
                     Some(inner) => Ok(inner),
                     None => Err(DecodeError(format!(
                         "Cannot find `{}` in record map",

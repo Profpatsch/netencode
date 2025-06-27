@@ -292,4 +292,27 @@ rec{
     sha256 = "1kd047p8jv6mhmfzddjvfa2nwkfrb3l1wml6lfm51n1cr06cc9lz";
   };
 
+  hashbrown = buildRustCrate {
+    pname = "hashbrown";
+    version = "0.15.4";
+    sha256 = "1c343k4awpypri215ybsa7arrl9p2kiypzjqkm976gddjj4g95aq";
+    edition = "2021";
+  };
+
+  equivalent = buildRustCrate {
+    pname = "equivalent";
+    version = "1.0.2";
+    sha256 = "0mfmzd7sqc7k16mjva3zmi1xahvnsc0zhrgmyswyj5rbsr89ydxr";
+    edition = "2015";
+  };
+
+  indexmap = buildRustCrate {
+    pname = "indexmap";
+    version = "2.10.0";
+    sha256 = "130drsrq686zqpmfdvq7p2l39xxpmvrmjjlmgjs26jd6nwbq1gql";
+    edition = "2021";
+    dependencies = [ equivalent hashbrown ];
+    features = [ "std" ];
+  };
+
 }

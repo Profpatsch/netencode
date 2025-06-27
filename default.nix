@@ -15,6 +15,7 @@ let
       name = "netencode";
       dependencies = [
         rust-crates.nom
+        rust-crates.indexmap
         exec-helpers.exec-helpers-rs
       ];
     }
@@ -153,17 +154,19 @@ let
       name = "env-splice-record";
       dependencies = [
         netencode-rs
+        rust-crates.indexmap
         exec-helpers.exec-helpers-rs
       ];
     } ''
     extern crate netencode;
     extern crate exec_helpers;
+    extern crate indexmap;
     use netencode::{T};
     use std::os::unix::ffi::OsStringExt;
 
     fn main() {
         exec_helpers::no_args("env-splice-record");
-        let mut res = std::collections::HashMap::new();
+        let mut res = indexmap::IndexMap::new();
         for (key, val) in std::env::vars_os() {
           match (String::from_utf8(key.into_vec()), String::from_utf8(val.into_vec())) {
             (Ok(k), Ok(v)) => { let _ = res.insert(k, T::Text(v)); },
@@ -226,13 +229,15 @@ let
         netencode-rs
         exec-helpers.exec-helpers-rs
         rust-crates.serde_json
+        rust-crates.indexmap
       ];
     } ''
     extern crate netencode;
     extern crate exec_helpers;
     extern crate serde_json;
+    extern crate indexmap;
     use netencode::{T, Tag};
-    use std::collections::HashMap;
+    use indexmap::IndexMap;
 
     fn json_to_netencode(value: serde_json::Value) -> T {
         match value {
@@ -260,7 +265,7 @@ let
                 T::List(arr.into_iter().map(json_to_netencode).collect())
             },
             serde_json::Value::Object(obj) => {
-                let mut map = HashMap::new();
+                let mut map = IndexMap::new();
                 for (k, v) in obj {
                     map.insert(k, json_to_netencode(v));
                 }
@@ -289,16 +294,18 @@ let
       name = "netencode-filter";
       dependencies = [
         netencode-rs
+        rust-crates.indexmap
         exec-helpers.exec-helpers-rs
       ];
     } ''
     extern crate netencode;
     extern crate exec_helpers;
+    extern crate indexmap;
     use netencode::{T, U, dec};
     use netencode::dec::{Decoder, DecodeError};
     use std::io::{self, Write, BufRead, BufReader};
 
-    fn matches_filter(record: &std::collections::HashMap<String, T>, field: &str, value: &str) -> bool {
+    fn matches_filter(record: &indexmap::IndexMap<String, T>, field: &str, value: &str) -> bool {
         if let Some(field_value) = record.get(field) {
             match field_value {
                 T::Text(s) => s == value,
