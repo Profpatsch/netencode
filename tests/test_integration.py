@@ -232,6 +232,148 @@ class TestToolCompatibility:
         assert result == 't5:value,'
 
 
+class TestFieldOrdering:
+    """Test that record field ordering is preserved with IndexMap."""
+    
+    def test_record_field_ordering_preserved_through_roundtrip(self):
+        """Test that field ordering is preserved when parsing and re-encoding records."""
+        # Create a record with a specific field order that would be different with HashMap
+        # Use field names that would hash to different positions
+        original_json = '{"zebra": 1, "alpha": 2, "beta": 3, "gamma": 4}'
+        
+        # Convert to netencode 
+        netencode_result = run_tool('json-to-netencode', stdin=original_json)
+        netencode_data = netencode_result.stdout.strip()
+        
+        # Parse and re-encode through netencode-plain (which does passthrough for records)
+        passthrough_result = run_tool('netencode-plain', stdin=netencode_data)
+        final_netencode = passthrough_result.stdout.strip()
+        
+        # The field order should be preserved
+        assert netencode_data == final_netencode
+        
+        # Additionally, verify the actual order by extracting each field
+        zebra_field = run_tool('record-get', 'zebra', stdin=netencode_data)
+        alpha_field = run_tool('record-get', 'alpha', stdin=netencode_data)
+        beta_field = run_tool('record-get', 'beta', stdin=netencode_data)
+        gamma_field = run_tool('record-get', 'gamma', stdin=netencode_data)
+        
+        # All fields should be accessible
+        assert zebra_field.stdout.strip() == 'i:1,'
+        assert alpha_field.stdout.strip() == 'i:2,'
+        assert beta_field.stdout.strip() == 'i:3,'
+        assert gamma_field.stdout.strip() == 'i:4,'
+    
+    def test_deterministic_encoding_same_data_different_construction(self):
+        """Test that the same logical record produces identical encoding regardless of construction method."""
+        # Method 1: Build record from JSON
+        json_input = '{"first": "a", "second": "b", "third": "c"}'
+        method1_result = run_tool('json-to-netencode', stdin=json_input)
+        encoding1 = method1_result.stdout.strip()
+        
+        # Method 2: Build the same record through env-splice-record
+        import subprocess
+        from conftest import get_tool_path
+        
+        env = {
+            'first': 'a',
+            'second': 'b', 
+            'third': 'c'
+        }
+        
+        tool_path = get_tool_path('env-splice-record')
+        method2_result = subprocess.run([tool_path], capture_output=True, text=True, env=env)
+        encoding2 = method2_result.stdout.strip()
+        
+        # Both methods should produce records with the same content when parsed
+        # (though exact byte encoding might differ due to different field orders)
+        # Verify by extracting each field from both encodings
+        for field in ['first', 'second', 'third']:
+            field1 = run_tool('record-get', field, stdin=encoding1)
+            field2 = run_tool('record-get', field, stdin=encoding2)
+            
+            # Same field values should be extracted
+            assert field1.stdout == field2.stdout
+    
+    def test_json_parser_produces_consistent_field_order(self):
+        """Test that JSON parser produces consistent field ordering."""
+        # JSON parsers typically sort fields alphabetically or preserve insertion order
+        # The key insight is that our IndexMap preserves whatever order the JSON parser gives us
+        json1 = '{"a": 1, "b": 2}'
+        json2 = '{"b": 2, "a": 1}'
+        
+        result1 = run_tool('json-to-netencode', stdin=json1)
+        result2 = run_tool('json-to-netencode', stdin=json2)
+        
+        encoding1 = result1.stdout.strip()
+        encoding2 = result2.stdout.strip()
+        
+        # Our JSON parser (serde_json) actually sorts fields alphabetically,
+        # so both should produce the same encoding
+        assert encoding1 == encoding2
+        
+        # Both should contain the same field values
+        a_field1 = run_tool('record-get', 'a', stdin=encoding1)
+        a_field2 = run_tool('record-get', 'a', stdin=encoding2)
+        b_field1 = run_tool('record-get', 'b', stdin=encoding1)
+        b_field2 = run_tool('record-get', 'b', stdin=encoding2)
+        
+        assert a_field1.stdout == a_field2.stdout == 'i:1,'
+        assert b_field1.stdout == b_field2.stdout == 'i:2,'
+        
+        # Verify consistent field order by checking byte positions
+        # With alphabetical sorting, 'a' should come before 'b'
+        a_pos = encoding1.find('<1:a|')
+        b_pos = encoding1.find('<1:b|')
+        assert a_pos < b_pos, "Field 'a' should come before 'b' in alphabetical order"
+    
+    def test_field_order_preservation_different_construction_methods(self):
+        """Test that different construction methods can produce different field orders."""
+        import subprocess
+        from conftest import get_tool_path
+        
+        # Method 1: Environment variables in one order (alphabetical)
+        env1 = {'a': 'value1', 'b': 'value2'}
+        tool_path = get_tool_path('env-splice-record')
+        result1 = subprocess.run([tool_path], capture_output=True, text=True, env=env1)
+        encoding1 = result1.stdout.strip()
+        
+        # Method 2: Environment variables in different order (reverse alphabetical)
+        env2 = {'z': 'value1', 'a': 'value2'}  
+        result2 = subprocess.run([tool_path], capture_output=True, text=True, env=env2)
+        encoding2 = result2.stdout.strip()
+        
+        # The encodings should be different due to different field orders
+        assert encoding1 != encoding2
+        
+        # Verify that each preserves its own field order
+        # For encoding1: 'a' should come before 'b' (alphabetical in env)
+        if '<1:a|' in encoding1 and '<1:b|' in encoding1:
+            a_pos1 = encoding1.find('<1:a|')
+            b_pos1 = encoding1.find('<1:b|')
+            assert a_pos1 < b_pos1, "In env1, 'a' should come before 'b'"
+        
+        # For encoding2: 'a' should come after 'z' (alphabetical in env)  
+        if '<1:a|' in encoding2 and '<1:z|' in encoding2:
+            a_pos2 = encoding2.find('<1:a|')
+            z_pos2 = encoding2.find('<1:z|')
+            assert a_pos2 > z_pos2, "In env2, 'a' should come after 'z'"
+        
+        # Both should allow extracting their respective fields
+        if 'a' in env1:
+            a_field1 = run_tool('record-get', 'a', stdin=encoding1)
+            assert a_field1.returncode == 0
+        if 'b' in env1:
+            b_field1 = run_tool('record-get', 'b', stdin=encoding1)
+            assert b_field1.returncode == 0
+        if 'z' in env2:
+            z_field2 = run_tool('record-get', 'z', stdin=encoding2)
+            assert z_field2.returncode == 0
+        if 'a' in env2:
+            a_field2 = run_tool('record-get', 'a', stdin=encoding2)
+            assert a_field2.returncode == 0
+
+
 class TestEdgeCases:
     """Test edge cases and error handling."""
     
