@@ -55,24 +55,3 @@ def run_tool(tool_name: str, *args: str, stdin: Optional[str] = None,
     return result
 
 
-@pytest.fixture
-def sample_records():
-    """Provide sample netencode records for testing."""
-    return {
-        'alice_age': '{29:<3:age|i:30,<4:name|t5:Alice,}',
-        'bob_age': '{27:<3:age|i:25,<4:name|t3:Bob,}',
-        'simple_name': '{17:<4:name|t5:Alice,}',
-        'boolean_record': '{"active": true, "disabled": false}',  # JSON for conversion
-    }
-
-
-@pytest.fixture
-def json_samples():
-    """Provide sample JSON for conversion testing.""" 
-    return {
-        'simple_object': '{"name": "Alice", "age": 30}',
-        'boolean_object': '{"active": true, "disabled": false}',
-        'array_object': '{"items": ["foo", "bar"]}',
-        'number_object': '{"positive": 42, "negative": -17, "zero": 0}',
-        'null_object': '{"empty": null}',
-    }

@@ -22,9 +22,11 @@ in pkgs.mkShell {
     netencode.env-splice-record
     netencode.record-splice-env
     netencode.pretty
+    netencode.netencode-man
     
     # Utilities for tests
     curl  # For GitHub API tests
+    man  # To read man pages
   ];
   
   # Set up environment variables for the tools
