@@ -47,19 +47,19 @@ DON’T `cd` INTO INTO `tests/`!
 # Enter test environment
 nix-shell tests/shell.nix --run "<test-command>"
 
-# Run all tests
-pytest
+# Run all tests (default: quiet mode with short tracebacks)
+pytest -q --tb=short
 
 # Run specific test files
-pytest test_integration.py      # 36 integration tests
-pytest test_readme_examples.py  # 17 README example tests
-pytest test_netencode_py.py     # 22 Python module tests
+pytest -q --tb=short test_integration.py      # 36 integration tests
+pytest -q --tb=short test_readme_examples.py  # 17 README example tests
+pytest -q --tb=short test_netencode_py.py     # 22 Python module tests
 
-# Run with verbose output
+# Run with full verbose output (only when errors need investigation)
 pytest -v
 
 # Run specific test
-pytest test_readme_examples.py::TestReadmeExamples::test_basic_record_field_extraction
+pytest -q --tb=short test_readme_examples.py::TestReadmeExamples::test_basic_record_field_extraction
 ```
 
 ### Build Systems

@@ -300,10 +300,9 @@ class TestReadmeExamples:
         flake_path = os.path.dirname(os.path.dirname(__file__))  # Go up from tests/ to repo root
         
         try:
-            # Test: echo -n 't5:hello,' | nix run .#netencode-pretty
-            # Use echo -n to avoid newline issues that tools currently don't handle
+            # Test: echo 't5:hello,' | nix run .#netencode-pretty
             result = subprocess.run(
-                ['bash', '-c', f'echo -n "{text_input}" | nix run {flake_path}#netencode-pretty'],
+                ['bash', '-c', f'echo "{text_input}" | nix run {flake_path}#netencode-pretty'],
                 capture_output=True, text=True, timeout=60
             )
             
@@ -311,9 +310,9 @@ class TestReadmeExamples:
             assert result.returncode == 0, f"nix run #netencode-pretty failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
             assert 'hello' in result.stdout
             
-            # Test: echo -n 't5:hello,' | nix run . (default app)
+            # Test: echo 't5:hello,' | nix run . (default app)
             result2 = subprocess.run(
-                ['bash', '-c', f'echo -n "{text_input}" | nix run {flake_path}'],
+                ['bash', '-c', f'echo "{text_input}" | nix run {flake_path}'],
                 capture_output=True, text=True, timeout=60
             )
             

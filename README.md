@@ -202,10 +202,10 @@ curl -s api/source.json |
 
 ```bash
 # Pretty-print netencode data
-echo -n 't5:hello,' | nix run github:Profpatsch/netencode
+echo 't5:hello,' | nix run github:Profpatsch/netencode
 
 # The default app is netencode-pretty, but you can access others:
-echo -n 't5:hello,' | nix run github:Profpatsch/netencode#netencode-pretty
+echo 't5:hello,' | nix run github:Profpatsch/netencode#netencode-pretty
 ```
 
 ### Development Environment
@@ -215,9 +215,9 @@ echo -n 't5:hello,' | nix run github:Profpatsch/netencode#netencode-pretty
 nix develop
 
 # Now all CLI tools are in your PATH:
-echo -n 't5:hello,' | netencode-pretty
-echo -n 't5:hello,' | netencode-plain
-echo -n '{25:<4:name|t5:Alice,<3:age|n:30,}' | netencode-record-get name
+echo 't5:hello,' | netencode-pretty
+echo 't5:hello,' | netencode-plain
+echo '{25:<4:name|t5:Alice,<3:age|n:30,}' | netencode-record-get name
 
 # Process data pipelines with full toolset
 curl -s api/users.json | json-to-netencode | netencode-filter active=true | netencode-record-get name | netencode-plain
