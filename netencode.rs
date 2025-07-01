@@ -170,7 +170,13 @@ pub fn t_from_stdin_or_die_user_error<'a>(prog_name: &'_ str) -> T {
     match t_from_stdin_or_die_user_error_with_rest(prog_name, &vec![]) {
         None => exec_helpers::die_user_error(prog_name, "stdin was empty"),
         Some((rest, t)) => {
-            if rest.is_empty() {
+            // Allow trailing newlines but reject other content
+            let trimmed_rest: Vec<u8> = rest.iter()
+                .cloned()
+                .filter(|&b| b != b'\n')
+                .collect();
+            
+            if trimmed_rest.is_empty() {
                 t
             } else {
                 exec_helpers::die_user_error(
@@ -184,6 +190,7 @@ pub fn t_from_stdin_or_die_user_error<'a>(prog_name: &'_ str) -> T {
         }
     }
 }
+
 
 /// Read a netencode value from stdin incrementally, return bytes that could not be read.
 /// Nothing if there was nothing to read from stdin & no initial_bytes were provided.

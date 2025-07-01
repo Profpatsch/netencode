@@ -153,14 +153,14 @@ class TestReadmeExamples:
         # Convert to netencode
         ne1 = run_tool('json-to-netencode', stdin=record1).stdout.strip()
         ne2 = run_tool('json-to-netencode', stdin=record2).stdout.strip()
-        input_stream = f"{ne1}\n{ne2}"
+        input_stream = ne1 + b'\n' + ne2
         
         # Filter active records
         filtered = run_tool('netencode-filter', 'status=active', stdin=input_stream)
         
         # Should only contain Alice's record
-        assert 'Alice' in filtered.stdout
-        assert 'Bob' not in filtered.stdout
+        assert b'Alice' in filtered.stdout
+        assert b'Bob' not in filtered.stdout
         
         # Extract fields using netencode-record-get
         name_result = run_tool('netencode-record-get', 'name', stdin=filtered.stdout.strip())
@@ -171,8 +171,8 @@ class TestReadmeExamples:
         email = email_result.stdout.strip()
         
         # Should extract correct values in netencode format
-        assert 'Alice' in name
-        assert 'alice@example.com' in email
+        assert b'Alice' in name
+        assert b'alice@example.com' in email
     
     def test_complete_pipeline_with_plain_output(self):
         """Test the complete pipeline example from README CLI Tools section."""
@@ -183,7 +183,7 @@ class TestReadmeExamples:
         # Convert each to netencode
         alice_ne = run_tool('json-to-netencode', stdin=alice_json).stdout.strip()
         bob_ne = run_tool('json-to-netencode', stdin=bob_json).stdout.strip()
-        input_stream = f"{alice_ne}\n{bob_ne}"
+        input_stream = alice_ne + b'\n' + bob_ne
         
         # Filter active users  
         filtered_data = run_tool('netencode-filter', 'active=true', stdin=input_stream)
