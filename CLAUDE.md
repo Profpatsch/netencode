@@ -35,11 +35,12 @@ This is **netencode**, a data serialization format and library implementation. I
 
 ## Development Commands
 
-### Primary Build System (Nix)
-```bash
-# Enter development environment
-nix-shell
+### Test Running
+- If you want to run tests, run `nix-shell tests/shell.nix --run '<the command'>`, don’t `cd` into the tests directory first
 
+### Primary Build System (Nix)
+
+```bash
 # Build all components
 nix-build
 

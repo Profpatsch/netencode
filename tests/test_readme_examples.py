@@ -13,7 +13,8 @@ DO NOT just fix tests - always verify and update README examples to match!
 """
 import pytest
 import subprocess
-from conftest import run_tool
+from conftest import run_tool, get_tool_path
+import netencode_py as ne
 
 
 class TestReadmeExamples:
@@ -46,23 +47,23 @@ class TestReadmeExamples:
         # Should create valid netencode binary string
         assert result_format == "b13:Hello, World!,"
     
-    def test_basic_record_field_extraction(self, sample_records):
+    def test_basic_record_field_extraction(self):
         """Test extracting name field from record."""
-        record = sample_records['alice_age']
+        record = ne.simple_record(name=ne.text("Alice"), age=ne.integer(30))
         result = run_tool('record-get', 'name', stdin=record)
         
         # Should extract name field
-        assert result.stdout.strip() == 't5:Alice,'
+        assert result.stdout.strip() == b't5:Alice,'
     
-    def test_basic_record_field_extraction_with_plain(self, sample_records):
+    def test_basic_record_field_extraction_with_plain(self):
         """Test extracting name field and converting to plain text - README example."""
         # Test the exact example: echo '{...}' | record-get name | netencode-plain
-        record = sample_records['alice_age']
+        record = ne.simple_record(name=ne.text("Alice"), age=ne.integer(30))
         field_result = run_tool('record-get', 'name', stdin=record)
         plain_result = run_tool('netencode-plain', stdin=field_result.stdout)
         
         # Should extract name as plain text
-        assert plain_result.stdout == 'Alice'
+        assert plain_result.stdout == b'Alice'
     
     def test_configuration_extraction_with_plain(self):
         """Test configuration example from README with netencode-plain."""
@@ -72,22 +73,22 @@ class TestReadmeExamples:
         # Extract host and convert to plain
         host_field = run_tool('record-get', 'host', stdin=config)
         host_plain = run_tool('netencode-plain', stdin=host_field.stdout)
-        assert host_plain.stdout == 'localhost'
+        assert host_plain.stdout == b'localhost'
         
         # Extract port and convert to plain  
         port_field = run_tool('record-get', 'port', stdin=config)
         port_plain = run_tool('netencode-plain', stdin=port_field.stdout)
-        assert port_plain.stdout == '8080'
+        assert port_plain.stdout == b'8080'
     
-    def test_environment_integration_with_record_splice_env(self, sample_records):
+    def test_environment_integration_with_record_splice_env(self):
         """Test the echo example from README."""
-        record = sample_records['alice_age']
+        record = ne.simple_record(name=ne.text("Alice"), age=ne.integer(30))
         # Use shell -c to properly expand variables
         result = run_tool('record-splice-env', 'sh', '-c', 'echo "Hello $name, you are $age years old"', 
                          stdin=record)
         
         # Should expand environment variables from record  
-        assert result.stdout.strip() == 'Hello Alice, you are 30 years old'
+        assert result.stdout.strip() == b'Hello Alice, you are 30 years old'
     
     def test_env_splice_record_basic_functionality(self):
         """Test that env-splice-record produces valid netencode."""
@@ -138,10 +139,10 @@ class TestReadmeExamples:
         
         # Should be parseable by record-get
         name_result = run_tool('record-get', 'name', stdin=record)
-        assert name_result.stdout.strip() == f't{len(name)}:{name},'
+        assert name_result.stdout.strip() == f't{len(name)}:{name},'.encode('utf-8')
         
         age_result = run_tool('record-get', 'age', stdin=record)
-        assert age_result.stdout.strip() == f'n:{age},'
+        assert age_result.stdout.strip() == f'n:{age},'.encode('utf-8')
     
     def test_pipeline_data_transformation(self):
         """Test complex pipeline similar to README example."""
@@ -194,7 +195,7 @@ class TestReadmeExamples:
         plain_name = run_tool('netencode-plain', stdin=name_field.stdout)
         
         # Should get Alice as plain text
-        assert plain_name.stdout == 'Alice'
+        assert plain_name.stdout == b'Alice'
     
     def test_type_safety_naturals_vs_integers(self):
         """Test that netencode distinguishes number types correctly."""
@@ -209,20 +210,20 @@ class TestReadmeExamples:
         temp_result = run_tool('record-get', 'temperature', stdin=integer_ne).stdout.strip()
         
         # Should be properly typed (JSON-to-netencode uses i: for all numbers)
-        assert count_result == 'i:42,'
-        assert temp_result == 'i:-10,'
+        assert count_result == b'i:42,'
+        assert temp_result == b'i:-10,'
     
-    def test_length_prefixed_streaming_advantage(self, sample_records):
+    def test_length_prefixed_streaming_advantage(self):
         """Test that we can skip over data without parsing it."""
-        record1 = sample_records['alice_age']
-        record2 = sample_records['bob_age']
+        record1 = ne.simple_record(name=ne.text("Alice"), age=ne.integer(30))
+        record2 = ne.simple_record(name=ne.text("Bob"), age=ne.integer(25))
         
         # Should be able to extract fields from each record
         first_name = run_tool('record-get', 'name', stdin=record1).stdout.strip()
         second_name = run_tool('record-get', 'name', stdin=record2).stdout.strip()
         
-        assert first_name == 't5:Alice,'
-        assert second_name == 't3:Bob,'
+        assert first_name == b't5:Alice,'
+        assert second_name == b't3:Bob,'
     
     def test_boolean_representation_as_tagged_units(self):
         """Test boolean conversion to tagged units."""
@@ -230,12 +231,12 @@ class TestReadmeExamples:
         result = run_tool('json-to-netencode', stdin=bool_record)
         
         # Should convert to tagged units
-        assert '<6:active|<4:true|u,' in result.stdout
-        assert '<8:disabled|<5:false|u,' in result.stdout
+        assert b'<6:active|<4:true|u,' in result.stdout
+        assert b'<8:disabled|<5:false|u,' in result.stdout
         
         # Should be extractable
         active_result = run_tool('record-get', 'active', stdin=result.stdout.strip())
-        assert active_result.stdout.strip() == '<4:true|u,'
+        assert active_result.stdout.strip() == b'<4:true|u,'
     
     @pytest.mark.skipif("not network_available()", reason="Network required for GitHub API")
     def test_github_api_data_processing(self):
@@ -264,7 +265,7 @@ class TestReadmeExamples:
             
             # Should produce valid netencode output
             assert ne_result.stdout
-            assert ne_result.stdout.strip().startswith('[')  # Should start with list marker
+            assert ne_result.stdout.strip().startswith(b'[')  # Should start with list marker
             
         except subprocess.TimeoutExpired:
             pytest.skip("GitHub API request timed out")
@@ -279,11 +280,11 @@ class TestReadmeExamples:
         
         # Extract repository name
         repo_name = run_tool('record-get', 'name', stdin=netencode_repo).stdout.strip()
-        assert repo_name == 't11:Hello-World,'
+        assert repo_name == b't11:Hello-World,'
         
         # Check if archived field can be extracted
         archived_status = run_tool('record-get', 'archived', stdin=netencode_repo).stdout.strip()
-        assert archived_status == '<5:false|u,'
+        assert archived_status == b'<5:false|u,'
     
     def test_nix_flake_app_examples(self):
         """Test nix run commands from the flake usage section."""

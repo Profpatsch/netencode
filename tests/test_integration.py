@@ -17,8 +17,8 @@ class TestJSONToNetencode:
         result = run_tool('json-to-netencode', stdin=json_input)
         
         # Should contain both fields in netencode format
-        assert '<4:name|t5:Alice' in result.stdout
-        assert '<3:age|i:30' in result.stdout
+        assert b'<4:name|t5:Alice' in result.stdout
+        assert b'<3:age|i:30' in result.stdout
     
     def test_converts_boolean_values(self):
         """json-to-netencode converts boolean values."""
@@ -26,8 +26,8 @@ class TestJSONToNetencode:
         result = run_tool('json-to-netencode', stdin=json_input)
         
         # Booleans should be converted to tagged units
-        assert '<6:active|<4:true|u' in result.stdout
-        assert '<8:disabled|<5:false|u' in result.stdout
+        assert b'<6:active|<4:true|u' in result.stdout
+        assert b'<8:disabled|<5:false|u' in result.stdout
     
     def test_converts_arrays(self):
         """json-to-netencode converts arrays."""
@@ -35,9 +35,9 @@ class TestJSONToNetencode:
         result = run_tool('json-to-netencode', stdin=json_input)
         
         # Should contain list with text elements
-        assert '<5:items|[' in result.stdout
-        assert 't3:foo' in result.stdout
-        assert 't3:bar' in result.stdout
+        assert b'<5:items|[' in result.stdout
+        assert b't3:foo,' in result.stdout
+        assert b't3:bar,' in result.stdout
     
     def test_handles_numbers_correctly(self):
         """json-to-netencode handles numbers correctly."""
@@ -45,9 +45,9 @@ class TestJSONToNetencode:
         result = run_tool('json-to-netencode', stdin=json_input)
         
         # Should handle different number types
-        assert '<8:positive|i:42' in result.stdout
-        assert '<8:negative|i:-17' in result.stdout
-        assert '<4:zero|i:0' in result.stdout
+        assert b'<8:positive|i:42' in result.stdout
+        assert b'<8:negative|i:-17' in result.stdout
+        assert b'<4:zero|i:0' in result.stdout
     
     def test_handles_null_values(self):
         """json-to-netencode handles null values."""
@@ -55,7 +55,7 @@ class TestJSONToNetencode:
         result = run_tool('json-to-netencode', stdin=json_input)
         
         # Null should become unit type
-        assert '<5:empty|u' in result.stdout
+        assert b'<5:empty|u' in result.stdout
     
     def test_rejects_malformed_json(self):
         """json-to-netencode rejects malformed JSON."""
@@ -75,40 +75,40 @@ class TestNetencodeFilter:
         # Create test data using Python module
         record1 = ne.simple_record(name=ne.text("Alice"), role=ne.text("admin"))
         record2 = ne.simple_record(name=ne.text("Bob"), role=ne.text("user"))
-        input_stream = f"{record1}\n{record2}"
+        input_stream = record1 + b"\n" + record2
         
         # Filter by role=admin
         result = run_tool('netencode-filter', 'role=admin', stdin=input_stream)
         
         # Should only contain Alice's record
-        assert 'Alice' in result.stdout
-        assert 'Bob' not in result.stdout
+        assert b'Alice' in result.stdout
+        assert b'Bob' not in result.stdout
     
     def test_filters_by_number_field(self):
         """netencode-filter filters by number field."""
         record1 = ne.simple_record(name=ne.text("Alice"), age=ne.integer(30))
         record2 = ne.simple_record(name=ne.text("Bob"), age=ne.integer(25))
-        input_stream = f"{record1}\n{record2}"
+        input_stream = record1 + b"\n" + record2
         
         # Filter by age=30
         result = run_tool('netencode-filter', 'age=30', stdin=input_stream)
         
         # Should only contain Alice's record
-        assert 'Alice' in result.stdout
-        assert 'Bob' not in result.stdout
+        assert b'Alice' in result.stdout
+        assert b'Bob' not in result.stdout
     
     def test_filters_by_boolean_field(self):
         """netencode-filter filters by boolean field."""
         record1 = ne.simple_record(name=ne.text("Alice"), active=ne.boolean(True))
         record2 = ne.simple_record(name=ne.text("Bob"), active=ne.boolean(False))
-        input_stream = f"{record1}\n{record2}"
+        input_stream = record1 + b"\n" + record2
         
         # Filter by active=true
         result = run_tool('netencode-filter', 'active=true', stdin=input_stream)
         
         # Should only contain Alice's record
-        assert 'Alice' in result.stdout
-        assert 'Bob' not in result.stdout
+        assert b'Alice' in result.stdout
+        assert b'Bob' not in result.stdout
     
     def test_produces_no_output_for_non_matching_records(self):
         """netencode-filter produces no output for non-matching records."""
@@ -117,7 +117,7 @@ class TestNetencodeFilter:
         result = run_tool('netencode-filter', 'role=admin', stdin=record)
         
         # Should produce no output
-        assert result.stdout.strip() == ""
+        assert result.stdout.strip() == b""
     
     def test_passes_through_non_record_values(self):
         """netencode-filter passes through non-record values."""
@@ -135,7 +135,7 @@ class TestNetencodeFilter:
         result = run_tool('netencode-filter', 'missing=value', stdin=record)
         
         # Should produce no output for missing field
-        assert result.stdout.strip() == ""
+        assert result.stdout.strip() == b""
 
 
 class TestPipelineIntegration:
@@ -160,13 +160,13 @@ class TestPipelineIntegration:
         record3 = ne.simple_record(name=ne.text("Charlie"), active=ne.boolean(True))
         
         # Filter for active users
-        input_stream = f"{record1}\n{record2}\n{record3}"
+        input_stream = record1 + b"\n" + record2 + b"\n" + record3
         result = run_tool('netencode-filter', 'active=true', stdin=input_stream)
         
         # Should contain Alice and Charlie, but not Bob
-        assert 'Alice' in result.stdout
-        assert 'Charlie' in result.stdout
-        assert 'Bob' not in result.stdout
+        assert b'Alice' in result.stdout
+        assert b'Charlie' in result.stdout
+        assert b'Bob' not in result.stdout
 
 
 class TestToolCompatibility:
@@ -189,7 +189,7 @@ class TestToolCompatibility:
         record2 = ne.simple_record(name=ne.text("Bob"), role=ne.text("user"))
         
         # Create netencode stream
-        input_stream = f"{record1}\n{record2}"
+        input_stream = record1 + b"\n" + record2
         
         # Filter and extract names
         filtered = run_tool('netencode-filter', 'role=admin', stdin=input_stream).stdout.strip()
@@ -229,9 +229,9 @@ class TestFieldOrdering:
         assert beta_result.stdout.strip() == ne.natural(3)
         
         # Verify the field order in the encoded string
-        zebra_pos = record_data.find('<5:zebra|')
-        alpha_pos = record_data.find('<5:alpha|')
-        beta_pos = record_data.find('<4:beta|')
+        zebra_pos = record_data.find(b'<5:zebra|')
+        alpha_pos = record_data.find(b'<5:alpha|')
+        beta_pos = record_data.find(b'<4:beta|')
         
         # Fields should appear in the order we specified
         assert zebra_pos < alpha_pos < beta_pos
@@ -253,9 +253,9 @@ class TestFieldOrdering:
         assert original_record == roundtrip_record
         
         # Verify field order is preserved
-        third_pos = roundtrip_record.find('<5:third|')
-        first_pos = roundtrip_record.find('<5:first|')
-        second_pos = roundtrip_record.find('<6:second|')
+        third_pos = roundtrip_record.find(b'<5:third|')
+        first_pos = roundtrip_record.find(b'<5:first|')
+        second_pos = roundtrip_record.find(b'<6:second|')
         
         assert third_pos < first_pos < second_pos
     
@@ -274,13 +274,13 @@ class TestFieldOrdering:
         )
         
         # simple_record sorts alphabetically: alpha before zebra
-        alpha_pos1 = record1.find('<5:alpha|')
-        zebra_pos1 = record1.find('<5:zebra|')
+        alpha_pos1 = record1.find(b'<5:alpha|')
+        zebra_pos1 = record1.find(b'<5:zebra|')
         assert alpha_pos1 < zebra_pos1
         
         # record_ordered preserves explicit order: zebra before alpha
-        zebra_pos2 = record2.find('<5:zebra|')
-        alpha_pos2 = record2.find('<5:alpha|')
+        zebra_pos2 = record2.find(b'<5:zebra|')
+        alpha_pos2 = record2.find(b'<5:alpha|')
         assert zebra_pos2 < alpha_pos2
         
         # The two records should be different due to different field ordering
@@ -306,11 +306,10 @@ class TestFieldOrdering:
         assert results["field_001"] == ne.integer(-42)
         assert results["field_zzz"] == ne.text("hello")
         assert results["field_aaa"] == ne.unit()
-        
         # Verify the explicit ordering is preserved
         positions = {}
         for field in ["field_999", "field_001", "field_zzz", "field_aaa"]:
-            field_tag = f'<{len(field)}:{field}|'
+            field_tag = f'<{len(field)}:{field}|'.encode('utf-8')
             positions[field] = record_data.find(field_tag)
         
         # Should be in the order we specified
@@ -347,7 +346,6 @@ class TestFieldOrdering:
         assert beta_field.stdout.strip() == ne.integer(3)
         assert gamma_field.stdout.strip() == ne.integer(4)
 
-
 class TestNetencodePlain:
     """Test the netencode-plain tool for extracting scalar values."""
 
@@ -355,31 +353,31 @@ class TestNetencodePlain:
         """Test that text values are output as plain text."""
         text_value = ne.text("Alice")
         result = run_tool("netencode-plain", stdin=text_value)
-        assert result.stdout == "Alice"
+        assert result.stdout == b"Alice"
 
     def test_natural_numbers(self):
         """Test that natural numbers are output as decimal."""
         nat_value = ne.natural(42)
         result = run_tool("netencode-plain", stdin=nat_value)
-        assert result.stdout == "42"
+        assert result.stdout == b"42"
 
     def test_signed_integers(self):
         """Test that signed integers are output as decimal."""
         int_value = ne.integer(-10)
         result = run_tool("netencode-plain", stdin=int_value)
-        assert result.stdout == "-10"
+        assert result.stdout == b"-10"
 
     def test_boolean_true(self):
         """Test that boolean true is output as 'true'."""
         bool_value = ne.boolean(True)
         result = run_tool("netencode-plain", stdin=bool_value)
-        assert result.stdout == "true"
+        assert result.stdout == b"true"
 
     def test_boolean_false(self):
         """Test that boolean false is output as 'false'."""
         bool_value = ne.boolean(False)
         result = run_tool("netencode-plain", stdin=bool_value)
-        assert result.stdout == "false"
+        assert result.stdout == b"false"
 
     def test_record_passthrough(self):
         """Test that records pass through unchanged."""
@@ -397,13 +395,13 @@ class TestNetencodePlain:
         """Test that unit values produce no output."""
         unit_value = ne.unit()
         result = run_tool("netencode-plain", stdin=unit_value)
-        assert result.stdout == ""
+        assert result.stdout == b""
 
     def test_binary_data_passthrough(self):
         """Test that binary data is output as raw bytes."""
         binary_value = ne.binary(b"hello")
         result = run_tool("netencode-plain", stdin=binary_value)
-        assert result.stdout == "hello"
+        assert result.stdout == b"hello"
 
 
 class TestEdgeCases:
@@ -472,7 +470,7 @@ class TestEnvironmentIntegration:
         }
         
         tool_path = get_tool_path('env-splice-record')
-        result = subprocess.run([tool_path], capture_output=True, text=True, env=env)
+        result = subprocess.run([tool_path], capture_output=True, env=env)
         encoding = result.stdout.strip()
         
         # Verify that each field is accessible
