@@ -114,9 +114,9 @@ The test environment sets up these variables for tool access:
 
 - `JSON_TO_NETENCODE` - Path to json-to-netencode tool
 - `NETENCODE_FILTER` - Path to netencode-filter tool
-- `RECORD_GET` - Path to record-get tool
-- `ENV_SPLICE_RECORD` - Path to env-splice-record tool
-- `RECORD_SPLICE_ENV` - Path to record-splice-env tool
+- `NETENCODE_RECORD_GET` - Path to netencode-record-get tool
+- `ENV_TO_NETENCODE` - Path to env-to-netencode tool
+- `NETENCODE_TO_ENV` - Path to netencode-to-env tool
 - `NETENCODE_PRETTY` - Path to netencode-pretty tool
 
 ## Contributing

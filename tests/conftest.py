@@ -27,7 +27,7 @@ def run_tool(tool_name: str, *args: str, stdin: Optional[Union[str, bytes]] = No
     Run a netencode tool with the given arguments and stdin.
     
     Args:
-        tool_name: Name of the tool (e.g., 'record-get', 'json-to-netencode')
+        tool_name: Name of the tool (e.g., 'netencode-record-get', 'json-to-netencode')
         *args: Command line arguments to pass to the tool
         stdin: String or bytes to pass as stdin to the tool
         expect_success: If True, raise exception on non-zero exit code

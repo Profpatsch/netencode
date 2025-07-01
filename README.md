@@ -23,11 +23,11 @@ echo "Alice,30" | cut -d',' -f1  # Fragile CSV parsing
 echo "Alice 30" | awk '{print $1}'  # Whitespace assumptions
 
 # Netencode handles structure naturally:
-echo '{25:<4:name|t5:Alice,<3:age|n:30,}' | record-get name
+echo '{25:<4:name|t5:Alice,<3:age|n:30,}' | netencode-record-get name
 # Outputs: t5:Alice,
 
 # Convert netencode values to plain text for shell use:
-echo '{25:<4:name|t5:Alice,<3:age|n:30,}' | record-get name | netencode-plain
+echo '{25:<4:name|t5:Alice,<3:age|n:30,}' | netencode-record-get name | netencode-plain
 # Outputs: Alice
 ```
 
@@ -111,7 +111,7 @@ curl -s api/users.json | json-to-netencode | netencode-filter active=true
 # Shows: {33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}
 
 # Extract specific field
-curl -s api/users.json | json-to-netencode | netencode-filter active=true | record-get name
+curl -s api/users.json | json-to-netencode | netencode-filter active=true | netencode-record-get name
 # Shows: t5:Alice,
 ```
 
@@ -131,7 +131,7 @@ echo '{25:<4:name|t5:Alice,<3:age|n:30,}' | record-splice-env echo "Hello $name,
 
 ```bash
 # Process application logs (assuming they're in JSON format)
-tail -f app.log | json-to-netencode | netencode-filter level=error | record-get message
+tail -f app.log | json-to-netencode | netencode-filter level=error | netencode-record-get message
 # Shows error messages as they happen, and you can see the full structured data mid-pipeline
 ```
 
@@ -141,7 +141,7 @@ tail -f app.log | json-to-netencode | netencode-filter level=error | record-get 
 
 ```bash
 # Fetch user data from GitHub API and extract active repositories
-curl -s https://api.github.com/users/octocat/repos | json-to-netencode | netencode-filter archived=false | record-get name
+curl -s https://api.github.com/users/octocat/repos | json-to-netencode | netencode-filter archived=false | netencode-record-get name
 # Output: t9:Hello-World,t13:octocat.github.io,
 
 # Compare with raw JSON (binary soup when debugging):
@@ -156,7 +156,7 @@ tail -f /var/log/app.log |
   json-to-netencode |
   netencode-filter level=error |
   tee error.log |                    # Save errors while processing
-  record-get message                 # Show just the error messages
+  netencode-record-get message                 # Show just the error messages
 
 # You can see the full structured data at any stage by adding `tee /dev/stderr`
 ```
@@ -170,8 +170,8 @@ curl -s api/source.json |
   netencode-filter status=active |    # Filter active records
   while read -r record; do
     # Extract fields and transform
-    NAME=$(echo "$record" | record-get name | netencode-plain)
-    EMAIL=$(echo "$record" | record-get email | netencode-plain)
+    NAME=$(echo "$record" | netencode-record-get name | netencode-plain)
+    EMAIL=$(echo "$record" | netencode-record-get email | netencode-plain)
     # Output in netencode format for next stage
     echo "{$(( ${#NAME} + ${#EMAIL} + 25 )):<4:user|t${#NAME}:${NAME},<5:email|t${#EMAIL}:${EMAIL},}"
   done
@@ -217,10 +217,10 @@ nix develop
 # Now all CLI tools are in your PATH:
 echo -n 't5:hello,' | netencode-pretty
 echo -n 't5:hello,' | netencode-plain
-echo -n '{25:<4:name|t5:Alice,<3:age|n:30,}' | record-get name
+echo -n '{25:<4:name|t5:Alice,<3:age|n:30,}' | netencode-record-get name
 
 # Process data pipelines with full toolset
-curl -s api/users.json | json-to-netencode | netencode-filter active=true | record-get name | netencode-plain
+curl -s api/users.json | json-to-netencode | netencode-filter active=true | netencode-record-get name | netencode-plain
 ```
 
 ### Available Flake Outputs
@@ -363,7 +363,7 @@ The netencode ecosystem provides several command-line tools for working with dat
 
 ### Core Tools
 - **`json-to-netencode`**: Convert JSON to netencode format for pipeline processing
-- **`record-get <field>`**: Extract a field from a netencode record
+- **`netencode-record-get <field>`**: Extract a field from a netencode record
 - **`netencode-plain`**: Convert scalar netencode values to plain text (eliminates the need for sed patterns)
 - **`netencode-filter <field>=<value>`**: Filter netencode records by field values
 - **`netencode-pretty`**: Pretty-print netencode for human reading
@@ -381,7 +381,7 @@ The netencode ecosystem provides several command-line tools for working with dat
 curl -s api/users.json |
   json-to-netencode |              # JSON → netencode
   netencode-filter active=true |   # Filter records
-  record-get name |                # Extract field
+  netencode-record-get name |                # Extract field
   netencode-plain                  # Convert to plain text
 # Output: Alice
 ```

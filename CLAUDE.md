@@ -31,25 +31,28 @@ This is **netencode**, a data serialization format and library implementation. I
 - `netencode-pretty`: Format pretty-printer
 - `netencode-plain`: Extract scalar values from netencode as plain text
 - `netencode-filter`: Filter netencode records by field values
-- `record-get`: Extract record fields
-- `record-splice-env`: Execute commands with record fields as environment
-- `env-splice-record`: Convert environment to netencode record
+- `netencode-record-get`: Extract record fields
+- `netencode-to-env`: Execute commands with record fields as environment
+- `env-to-netencode`: Convert environment to netencode record
 - `json-to-netencode`: Convert JSON to netencode format
 - `netencode-mustache`: Template rendering
 
 ## Development Commands
 
 ### Testing (58 tests total)
+
+DON’T `cd` INTO INTO `tests/`!
+
 ```bash
-# Enter test environment (don't cd into tests/ first)
-nix-shell tests/shell.nix
+# Enter test environment
+nix-shell tests/shell.nix --run "<test-command>"
 
 # Run all tests
 pytest
 
 # Run specific test files
 pytest test_integration.py      # 36 integration tests
-pytest test_readme_examples.py  # 17 README example tests  
+pytest test_readme_examples.py  # 17 README example tests
 pytest test_netencode_py.py     # 22 Python module tests
 
 # Run with verbose output
@@ -68,7 +71,7 @@ nix-build
 
 # Build specific components
 nix-build -A netencode-hs      # Haskell library
-nix-build -A netencode-rs      # Rust library  
+nix-build -A netencode-rs      # Rust library
 nix-build -A pretty            # Pretty-printer
 nix-build -A netencode-mustache # Template tool
 ```
@@ -132,7 +135,7 @@ cargo build
 - Hedgehog property-based testing for roundtrip verification
 - Stable encoding with sorted record keys
 
-### Rust  
+### Rust
 - Nom-based incremental parsing
 - Zero-copy parsing support with borrowed types
 - Composable decoder framework for type-safe extraction

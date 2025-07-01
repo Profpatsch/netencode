@@ -1,16 +1,16 @@
-record-get(1) "netencode manual"
+netencode-record-get(1) "netencode manual"
 
 # NAME
 
-record-get - Extract a field from a netencode record
+netencode-record-get - Extract a field from a netencode record
 
 # SYNOPSIS
 
-*record-get* _field_
+*netencode-record-get* _field_
 
 # DESCRIPTION
 
-*record-get* extracts a specified field from a netencode record read from 
+*netencode-record-get* extracts a specified field from a netencode record read from 
 standard input. The field value is output as netencode data, which can be 
 further processed by other tools or converted to plain text.
 
@@ -24,7 +24,7 @@ allowing you to extract specific values from records without manual parsing.
 
 # INPUT
 
-*record-get* reads a single netencode record from standard input. The input 
+*netencode-record-get* reads a single netencode record from standard input. The input 
 must be a valid netencode record (starting with *{*).
 
 # OUTPUT
@@ -45,28 +45,28 @@ field does not exist in the record, the program exits with an error.
 Extract the name field from a user record:
 
 ```
-echo '{33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}' | record-get name
+echo '{33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}' | netencode-record-get name
 # Output: t5:Alice,
 ```
 
 Extract a numeric field:
 
 ```
-echo '{33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}' | record-get age  
+echo '{33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}' | netencode-record-get age  
 # Output: n:30,
 ```
 
 Chain with netencode-plain to get raw values:
 
 ```
-echo '{33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}' | record-get name | netencode-plain
+echo '{33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}' | netencode-record-get name | netencode-plain
 # Output: Alice
 ```
 
 Use in data processing pipelines:
 
 ```
-cat users.netencode | record-get email | netencode-plain > email-list.txt
+cat users.netencode | netencode-record-get email | netencode-plain > email-list.txt
 ```
 
 # ERRORS
@@ -78,4 +78,4 @@ The tool will exit with an error message if:
 
 # SEE ALSO
 
-*netencode*(5), *netencode-plain*(1), *record-splice-env*(1), *env-splice-record*(1)
+*netencode*(5), *netencode-plain*(1), *netencode-to-env*(1), *env-to-netencode*(1)

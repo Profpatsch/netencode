@@ -1,16 +1,16 @@
-env-splice-record(1) "netencode manual"
+env-to-netencode(1) "netencode manual"
 
 # NAME
 
-env-splice-record - Convert environment variables to a netencode record
+env-to-netencode - Convert environment variables to a netencode record
 
 # SYNOPSIS
 
-*env-splice-record*
+*env-to-netencode*
 
 # DESCRIPTION
 
-*env-splice-record* reads the current environment variables and converts them 
+*env-to-netencode* reads the current environment variables and converts them 
 to a netencode record, outputting the result to standard output. Each environment 
 variable becomes a field in the record, with the variable name as the field name 
 and the value as a text string.
@@ -20,11 +20,11 @@ form for processing by other netencode tools or for debugging environment setup.
 
 # OPTIONS
 
-*env-splice-record* takes no command-line arguments.
+*env-to-netencode* takes no command-line arguments.
 
 # INPUT
 
-*env-splice-record* reads environment variables from the current process 
+*env-to-netencode* reads environment variables from the current process 
 environment. No standard input is processed.
 
 # OUTPUT
@@ -54,33 +54,33 @@ values are ignored for safety.
 Capture current environment:
 
 ```
-env-splice-record
+env-to-netencode
 # Output: {200:<4:HOME|t10:/home/user,<4:PATH|t50:/usr/bin:/bin,...}
 ```
 
 Use with record-get to extract specific variables:
 
 ```
-env-splice-record | record-get HOME | netencode-plain
+env-to-netencode | netencode-record-get HOME | netencode-plain
 # Output: /home/user
 ```
 
 Filter environment variables:
 
 ```
-env-splice-record | netencode-pretty | grep USER
+env-to-netencode | netencode-pretty | grep USER
 ```
 
 Chain with other tools:
 
 ```
-env-splice-record | record-splice-env echo "User $USER in $HOME"
+env-to-netencode | netencode-to-env echo "User $USER in $HOME"
 ```
 
 Serialize environment for later use:
 
 ```
-env-splice-record > environment.netencode
+env-to-netencode > environment.netencode
 ```
 
 # NOTES
@@ -92,4 +92,4 @@ env-splice-record > environment.netencode
 
 # SEE ALSO
 
-*netencode*(5), *record-splice-env*(1), *record-get*(1), *netencode-pretty*(1)
+*netencode*(5), *netencode-to-env*(1), *netencode-record-get*(1), *netencode-pretty*(1)

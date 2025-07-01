@@ -147,7 +147,7 @@ class TestPipelineIntegration:
         
         # Filter -> extract name
         filtered = run_tool('netencode-filter', 'role=admin', stdin=record).stdout.strip()
-        name = run_tool('record-get', 'name', stdin=filtered).stdout.strip()
+        name = run_tool('netencode-record-get', 'name', stdin=filtered).stdout.strip()
         
         # Should extract Alice's name in netencode format
         assert name == ne.text("Alice")
@@ -173,11 +173,11 @@ class TestToolCompatibility:
     """Test compatibility between tools using Python-generated data."""
     
     def test_python_generated_records_work_with_record_get(self):
-        """Python-generated records work with record-get."""
+        """Python-generated records work with netencode-record-get."""
         record = ne.simple_record(name=ne.text("Alice"), age=ne.integer(30))
         
-        name_result = run_tool('record-get', 'name', stdin=record).stdout.strip()
-        age_result = run_tool('record-get', 'age', stdin=record).stdout.strip()
+        name_result = run_tool('netencode-record-get', 'name', stdin=record).stdout.strip()
+        age_result = run_tool('netencode-record-get', 'age', stdin=record).stdout.strip()
         
         # Should extract fields correctly
         assert name_result == ne.text("Alice")
@@ -193,7 +193,7 @@ class TestToolCompatibility:
         
         # Filter and extract names
         filtered = run_tool('netencode-filter', 'role=admin', stdin=input_stream).stdout.strip()
-        name = run_tool('record-get', 'name', stdin=filtered).stdout.strip()
+        name = run_tool('netencode-record-get', 'name', stdin=filtered).stdout.strip()
         
         # Should get Alice's name
         assert name == ne.text("Alice")
@@ -203,7 +203,7 @@ class TestToolCompatibility:
         record = ne.simple_record(test=ne.text("value"))
         
         # Should be able to extract the field with existing tool
-        result = run_tool('record-get', 'test', stdin=record).stdout.strip()
+        result = run_tool('netencode-record-get', 'test', stdin=record).stdout.strip()
         assert result == ne.text("value")
 
 
@@ -220,9 +220,9 @@ class TestFieldOrdering:
         )
         
         # Verify the record can be parsed and fields extracted
-        zebra_result = run_tool('record-get', 'zebra', stdin=record_data)
-        alpha_result = run_tool('record-get', 'alpha', stdin=record_data)
-        beta_result = run_tool('record-get', 'beta', stdin=record_data)
+        zebra_result = run_tool('netencode-record-get', 'zebra', stdin=record_data)
+        alpha_result = run_tool('netencode-record-get', 'alpha', stdin=record_data)
+        beta_result = run_tool('netencode-record-get', 'beta', stdin=record_data)
         
         assert zebra_result.stdout.strip() == ne.natural(1)
         assert alpha_result.stdout.strip() == ne.natural(2)
@@ -299,7 +299,7 @@ class TestFieldOrdering:
         # Verify all fields are accessible
         results = {}
         for field in ["field_999", "field_001", "field_zzz", "field_aaa"]:
-            result = run_tool('record-get', field, stdin=record_data)
+            result = run_tool('netencode-record-get', field, stdin=record_data)
             results[field] = result.stdout.strip()
         
         assert results["field_999"] == ne.boolean(True)
@@ -335,10 +335,10 @@ class TestFieldOrdering:
         assert original_record == final_record
         
         # Additionally, verify the actual order by extracting each field
-        zebra_field = run_tool('record-get', 'zebra', stdin=original_record)
-        alpha_field = run_tool('record-get', 'alpha', stdin=original_record)
-        beta_field = run_tool('record-get', 'beta', stdin=original_record)
-        gamma_field = run_tool('record-get', 'gamma', stdin=original_record)
+        zebra_field = run_tool('netencode-record-get', 'zebra', stdin=original_record)
+        alpha_field = run_tool('netencode-record-get', 'alpha', stdin=original_record)
+        beta_field = run_tool('netencode-record-get', 'beta', stdin=original_record)
+        gamma_field = run_tool('netencode-record-get', 'gamma', stdin=original_record)
         
         # All fields should be accessible
         assert zebra_field.stdout.strip() == ne.integer(1)
@@ -425,8 +425,8 @@ class TestEdgeCases:
         )
         
         # Should handle unicode properly
-        message_result = run_tool('record-get', 'message', stdin=record)
-        emoji_result = run_tool('record-get', 'emoji', stdin=record)
+        message_result = run_tool('netencode-record-get', 'message', stdin=record)
+        emoji_result = run_tool('netencode-record-get', 'emoji', stdin=record)
         
         assert message_result.stdout.strip() == ne.text("Hello 世界")
         assert emoji_result.stdout.strip() == ne.text("🌍")
@@ -439,7 +439,7 @@ class TestEdgeCases:
         )
         
         # Should handle special characters correctly (length-prefixed format)
-        result = run_tool('record-get', 'field:with:colons', stdin=record)
+        result = run_tool('netencode-record-get', 'field:with:colons', stdin=record)
         assert result.stdout.strip() == ne.text("value,with,commas")
     
     def test_filter_expression_validation(self):
@@ -460,7 +460,7 @@ class TestEnvironmentIntegration:
     """Test integration with environment variable tools."""
     
     def test_env_splice_record_deterministic_ordering(self):
-        """Test that env-splice-record produces deterministic output."""
+        """Test that env-to-netencode produces deterministic output."""
         import subprocess
         
         env = {
@@ -469,13 +469,13 @@ class TestEnvironmentIntegration:
             'third': 'value3'
         }
         
-        tool_path = get_tool_path('env-splice-record')
+        tool_path = get_tool_path('env-to-netencode')
         result = subprocess.run([tool_path], capture_output=True, env=env)
         encoding = result.stdout.strip()
         
         # Verify that each field is accessible
         for field in ['first', 'second', 'third']:
-            field_result = run_tool('record-get', field, stdin=encoding)
+            field_result = run_tool('netencode-record-get', field, stdin=encoding)
             assert field_result.returncode == 0
             # The value should be the text-encoded environment value
             expected_value = ne.text(env[field])

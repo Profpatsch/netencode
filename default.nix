@@ -93,9 +93,9 @@ let
     (builtins.readFile ./netencode-mustache.rs);
 
 
-  record-get = rust-writers.rustSimple
+  netencode-record-get = rust-writers.rustSimple
     {
-      name = "record-get";
+      name = "netencode-record-get";
       dependencies = [
         netencode-rs
         exec-helpers.exec-helpers-rs
@@ -107,22 +107,22 @@ let
     use netencode::dec::{Decoder, DecodeError};
 
     fn main() {
-        let args = exec_helpers::args("record-get", 1);
+        let args = exec_helpers::args("netencode-record-get", 1);
         let field = match std::str::from_utf8(&args[0]) {
             Ok(f) => f,
-            Err(_e) => exec_helpers::die_user_error("record-get", format!("The field name needs to be valid unicode"))
+            Err(_e) => exec_helpers::die_user_error("netencode-record-get", format!("The field name needs to be valid unicode"))
         };
-        let t = netencode::t_from_stdin_or_die_user_error("record-get");
+        let t = netencode::t_from_stdin_or_die_user_error("netencode-record-get");
         match (dec::RecordDot {field, inner: dec::AnyU }).dec(t.to_u()) {
             Ok(u) => encode(&mut std::io::stdout(), &u).expect("encoding to stdout failed"),
-            Err(DecodeError(err)) => exec_helpers::die_user_error("record-get", err)
+            Err(DecodeError(err)) => exec_helpers::die_user_error("netencode-record-get", err)
         }
     }
   '';
 
-  record-splice-env = rust-writers.rustSimple
+  netencode-to-env = rust-writers.rustSimple
     {
-      name = "record-splice-env";
+      name = "netencode-to-env";
       dependencies = [
         netencode-rs
         exec-helpers.exec-helpers-rs
@@ -133,25 +133,25 @@ let
     use netencode::dec::{Record, Try, ScalarAsBytes, Decoder, DecodeError};
 
     fn main() {
-        let t = netencode::t_from_stdin_or_die_user_error("record-splice-env");
-        let (_, prog) = exec_helpers::args_for_exec("record-splice-env", 0);
+        let t = netencode::t_from_stdin_or_die_user_error("netencode-to-env");
+        let (_, prog) = exec_helpers::args_for_exec("netencode-to-env", 0);
         match Record(Try(ScalarAsBytes)).dec(t.to_u()) {
             Ok(map) => {
                 exec_helpers::exec_into_args(
-                    "record-splice-env",
+                    "netencode-to-env",
                     prog,
                     // some elements can’t be decoded as scalars, so just ignore them
                     map.into_iter().filter_map(|(k, v)| v.map(|v2| (k, v2)))
                 );
             },
-            Err(DecodeError(err)) => exec_helpers::die_user_error("record-splice-env", err),
+            Err(DecodeError(err)) => exec_helpers::die_user_error("netencode-to-env", err),
         }
     }
   '';
 
-  env-splice-record = rust-writers.rustSimple
+  env-to-netencode = rust-writers.rustSimple
     {
-      name = "env-splice-record";
+      name = "env-to-netencode";
       dependencies = [
         netencode-rs
         rust-crates.indexmap
@@ -165,7 +165,7 @@ let
     use std::os::unix::ffi::OsStringExt;
 
     fn main() {
-        exec_helpers::no_args("env-splice-record");
+        exec_helpers::no_args("env-to-netencode");
         let mut res = indexmap::IndexMap::new();
         for (key, val) in std::env::vars_os() {
           match (String::from_utf8(key.into_vec()), String::from_utf8(val.into_vec())) {
@@ -183,9 +183,9 @@ let
     src = exact-source ./. [
       ./man/netencode.5.scd
       ./man/netencode-pretty.1.scd
-      ./man/record-get.1.scd
-      ./man/record-splice-env.1.scd
-      ./man/env-splice-record.1.scd
+      ./man/netencode-record-get.1.scd
+      ./man/netencode-to-env.1.scd
+      ./man/env-to-netencode.1.scd
       ./man/json-to-netencode.1.scd
       ./man/netencode-filter.1.scd
       ./man/netencode-plain.1.scd
@@ -196,9 +196,9 @@ let
       # Generate man pages from scdoc sources
       scdoc < man/netencode.5.scd > netencode.5
       scdoc < man/netencode-pretty.1.scd > netencode-pretty.1
-      scdoc < man/record-get.1.scd > record-get.1
-      scdoc < man/record-splice-env.1.scd > record-splice-env.1
-      scdoc < man/env-splice-record.1.scd > env-splice-record.1
+      scdoc < man/netencode-record-get.1.scd > netencode-record-get.1
+      scdoc < man/netencode-to-env.1.scd > netencode-to-env.1
+      scdoc < man/env-to-netencode.1.scd > env-to-netencode.1
       scdoc < man/json-to-netencode.1.scd > json-to-netencode.1
       scdoc < man/netencode-filter.1.scd > netencode-filter.1
       scdoc < man/netencode-plain.1.scd > netencode-plain.1
@@ -212,9 +212,9 @@ let
       
       # Install section 1 (commands)
       cp netencode-pretty.1 $out/share/man/man1/
-      cp record-get.1 $out/share/man/man1/
-      cp record-splice-env.1 $out/share/man/man1/
-      cp env-splice-record.1 $out/share/man/man1/
+      cp netencode-record-get.1 $out/share/man/man1/
+      cp netencode-to-env.1 $out/share/man/man1/
+      cp env-to-netencode.1 $out/share/man/man1/
       cp json-to-netencode.1 $out/share/man/man1/
       cp netencode-filter.1 $out/share/man/man1/
       cp netencode-plain.1 $out/share/man/man1/
@@ -437,9 +437,9 @@ let
     paths = [
       pretty
       netencode-mustache
-      record-get
-      record-splice-env
-      env-splice-record
+      netencode-record-get
+      netencode-to-env
+      env-to-netencode
       json-to-netencode
       netencode-filter
       netencode-plain
@@ -469,9 +469,9 @@ in
     pretty-rs
     pretty
     netencode-mustache
-    record-get
-    record-splice-env
-    env-splice-record
+    netencode-record-get
+    netencode-to-env
+    env-to-netencode
     json-to-netencode
     netencode-filter
     netencode-plain

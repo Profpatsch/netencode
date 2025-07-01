@@ -18,9 +18,9 @@ in pkgs.mkShell {
     netencode.json-to-netencode
     netencode.netencode-filter
     netencode.netencode-plain
-    netencode.record-get
-    netencode.env-splice-record
-    netencode.record-splice-env
+    netencode.netencode-record-get
+    netencode.env-to-netencode
+    netencode.netencode-to-env
     netencode.pretty
     netencode.netencode-man
     
@@ -37,18 +37,18 @@ in pkgs.mkShell {
     export JSON_TO_NETENCODE="$(which json-to-netencode)"
     export NETENCODE_FILTER="$(which netencode-filter)"
     export NETENCODE_PLAIN="$(which netencode-plain)"
-    export RECORD_GET="$(which record-get)"
-    export ENV_SPLICE_RECORD="$(which env-splice-record)"
-    export RECORD_SPLICE_ENV="$(which record-splice-env)"
+    export NETENCODE_RECORD_GET="$(which netencode-record-get)"
+    export ENV_TO_NETENCODE="$(which env-to-netencode)"
+    export NETENCODE_TO_ENV="$(which netencode-to-env)"
     export NETENCODE_PRETTY="$(which netencode-pretty)"
     
     echo "Available netencode tools:"
     echo "  json-to-netencode: $JSON_TO_NETENCODE"
     echo "  netencode-filter: $NETENCODE_FILTER"
     echo "  netencode-plain: $NETENCODE_PLAIN"
-    echo "  record-get: $RECORD_GET"
-    echo "  env-splice-record: $ENV_SPLICE_RECORD"
-    echo "  record-splice-env: $RECORD_SPLICE_ENV"
+    echo "  netencode-record-get: $NETENCODE_RECORD_GET"
+    echo "  env-to-netencode: $ENV_TO_NETENCODE"
+    echo "  netencode-to-env: $NETENCODE_TO_ENV"
     echo "  netencode-pretty: $NETENCODE_PRETTY"
     echo ""
     echo "Python testing:"
