@@ -17,7 +17,8 @@ This is **netencode**, a data serialization format and library implementation. I
 ### Multi-language Implementation
 - **Haskell** (`Netencode.hs`, `Netencode/Parse.hs`): Type-safe implementation with strong ADTs
 - **Rust** (`netencode.rs`, `pretty.rs`): Performance-oriented with both owned (`T`) and borrowed (`U`) representations
-- **Nix**: Primary build system orchestrating both language implementations
+- **Python** (`tests/netencode_py.py`): Testing module with bytes-based netencode construction
+- **Nix**: Primary build system orchestrating all language implementations
 
 ### Core Components
 - `Netencode.hs`: Main Haskell library with `TF` functor and `Fix` recursion
@@ -28,18 +29,39 @@ This is **netencode**, a data serialization format and library implementation. I
 
 ### CLI Tools (built by Nix)
 - `netencode-pretty`: Format pretty-printer
+- `netencode-plain`: Extract scalar values from netencode as plain text
+- `netencode-filter`: Filter netencode records by field values
 - `record-get`: Extract record fields
 - `record-splice-env`: Execute commands with record fields as environment
 - `env-splice-record`: Convert environment to netencode record
+- `json-to-netencode`: Convert JSON to netencode format
 - `netencode-mustache`: Template rendering
 
 ## Development Commands
 
-### Test Running
-- If you want to run tests, run `nix-shell tests/shell.nix --run '<the command'>`, don’t `cd` into the tests directory first
+### Testing (58 tests total)
+```bash
+# Enter test environment (don't cd into tests/ first)
+nix-shell tests/shell.nix
 
-### Primary Build System (Nix)
+# Run all tests
+pytest
 
+# Run specific test files
+pytest test_integration.py      # 36 integration tests
+pytest test_readme_examples.py  # 17 README example tests  
+pytest test_netencode_py.py     # 22 Python module tests
+
+# Run with verbose output
+pytest -v
+
+# Run specific test
+pytest test_readme_examples.py::TestReadmeExamples::test_basic_record_field_extraction
+```
+
+### Build Systems
+
+#### Nix (Primary)
 ```bash
 # Build all components
 nix-build
@@ -51,7 +73,20 @@ nix-build -A pretty            # Pretty-printer
 nix-build -A netencode-mustache # Template tool
 ```
 
-### Alternative Build (Cabal)
+#### Nix Flake
+```bash
+# Build using flake
+nix build
+
+# Run tools via flake
+nix run .#netencode-pretty
+nix run .  # Default app (netencode-pretty)
+
+# Enter development shell
+nix develop
+```
+
+#### Cabal (Alternative)
 ```bash
 # Build all packages
 cabal build all
@@ -62,7 +97,7 @@ cabal build arglib-netencode   # Argument parsing
 cabal build exec-helpers       # Utilities
 ```
 
-### Rust Components
+#### Rust Components
 ```bash
 # In exec-helpers/ directory
 cargo build
@@ -70,17 +105,24 @@ cargo build
 
 ## Development Environment
 
-The `nix-shell` provides:
+### Main Development Shell (`nix-shell` or `nix develop`)
 - GHC with Hoogle documentation
 - Cabal and Haskell Language Server
-- All required dependencies for both Haskell and Rust
+- All required dependencies for Haskell, Rust, and Python
+
+### Test Environment (`nix-shell tests/shell.nix`)
+- Python 3.13+ with pytest
+- All netencode tools available via environment variables
+- Proper test isolation and tool path setup
 
 ## Project Structure
 
 - Multi-package Cabal project (`cabal.project`)
 - Haskell IDE configuration in `hie.yaml`
 - Nix helpers in `nix-lib/` for custom build utilities
-- Cross-language compatibility maintained between Haskell and Rust implementations
+- Comprehensive Python test suite in `tests/` (58 tests total)
+- Cross-language compatibility across Haskell, Rust, and Python
+- Nix flake for reproducible builds and development environments
 
 ## Key Implementation Details
 
@@ -95,6 +137,12 @@ The `nix-shell` provides:
 - Zero-copy parsing support with borrowed types
 - Composable decoder framework for type-safe extraction
 - Integration with Unix tooling philosophy
+
+### Python
+- Bytes-based netencode construction for testing
+- Direct binary format generation without intermediate representations
+- Comprehensive test suite covering all CLI tools and edge cases
+- README example verification ensuring documentation accuracy
 
 ## Commit Message Format
 
@@ -121,5 +169,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Wrap commit line lengths at around 70 characters
 - For commit messages, make the first line less than 70 characters long
 - Use little bullet points in the extended message and no flowery language
-
 - When compacting your history, write a file to docs/ that is called `<date>_<timestamp>_claude-compact.md` and contains the compacted history text
+
+## Testing Guidelines
+
+### Test Organization
+- `test_integration.py`: Tool pipelines and cross-tool compatibility (36 tests)
+- `test_readme_examples.py`: Documentation example verification (17 tests)
+- `test_netencode_py.py`: Python module unit tests (22 tests)
+- `netencode_py.py`: Python netencode construction module
+- `conftest.py`: Shared utilities with bytes-based `run_tool()`
+
+### Test Approach
+- Bytes-based approach consistent with netencode being a binary format
+- Use `b'expected'` not `'expected'` in assertions
+- The `run_tool()` function accepts both string and bytes stdin, returns bytes stdout/stderr
+
+### Adding New Tests
+- Integration tests → `test_integration.py`
+- README examples → `test_readme_examples.py`
+- Use existing `netencode_py` module for test data construction
