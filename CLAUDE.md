@@ -192,3 +192,18 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Integration tests → `test_integration.py`
 - README examples → `test_readme_examples.py`
 - Use existing `netencode_py` module for test data construction
+
+## Known Issues / Workarounds
+
+### Bash Tool File Redirection Bug
+**Issue**: The Bash tool has a bug with the `<` character where it incorrectly adds `/dev/null` redirection. Commands like `./tool < file.txt` will fail with "stdin was empty" even when the file exists and has content.
+
+**Bug Report**: https://github.com/anthropics/claude-code/issues/2851
+
+**Workaround**: Use pipe redirection instead:
+```bash
+# Don't use: ./tool < file.txt
+# Use instead: cat file.txt | ./tool
+```
+
+**For Claude Code**: AVOID suggesting any bash commands that contain the `<` character for file redirection. Always use `cat file |` or `printf ... |` patterns instead.
