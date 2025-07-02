@@ -15,14 +15,17 @@ This is **netencode**, a data serialization format and library implementation. I
 ## Architecture
 
 ### Multi-language Implementation
-- **Haskell** (`Netencode.hs`, `Netencode/Parse.hs`): Type-safe implementation with strong ADTs
-- **Rust** (`netencode.rs`, `pretty.rs`): Performance-oriented with both owned (`T`) and borrowed (`U`) representations
-- **Python** (`tests/netencode_py.py`): Testing module with bytes-based netencode construction
+- **Haskell** (`lib-haskell/Netencode.hs`, `lib-haskell/Netencode/Parse.hs`): Type-safe implementation with strong ADTs
+- **Rust** (`lib-rust/netencode.rs`, `pretty.rs`): Performance-oriented with both owned (`T`) and borrowed (`U`) representations
+- **Python** (`lib-python/netencode.py`): Generator library with standardized API for netencode construction
+- **Nix** (`lib-nix/gen.nix`): Generator functions with unified API
 - **Nix**: Primary build system orchestrating all language implementations
 
 ### Core Components
-- `Netencode.hs`: Main Haskell library with `TF` functor and `Fix` recursion
-- `netencode.rs`: Rust library with nom-based streaming parser
+- `lib-haskell/Netencode.hs`: Main Haskell library with `TF` functor and `Fix` recursion
+- `lib-rust/netencode.rs`: Rust library with nom-based streaming parser
+- `lib-python/netencode.py`: Python generator library with unified API
+- `lib-nix/gen.nix`: Nix generator functions with standardized interface
 - `exec-helpers/`: Rust utilities for command-line tools
 - `arglib/`: Argument parsing library
 - `third-party/my-prelude/`: Vendored Haskell utility library
@@ -155,11 +158,13 @@ nix-build -A netencode-tests --argstr customTest 'echo "Custom test before pytes
 
 ## Project Structure
 
+- **Language-organized directories**: `lib-haskell/`, `lib-rust/`, `lib-python/`, `lib-nix/`
+- **Unified API**: Standardized function names across all generator libraries
 - Multi-package Cabal project (`cabal.project`)
 - Haskell IDE configuration in `hie.yaml`
 - Nix helpers in `nix-lib/` for custom build utilities
 - Automated test suite with nix-build integration
-- Cross-language compatibility across Haskell, Rust, and Python
+- Cross-language compatibility with consistent APIs
 - Nix flake for reproducible builds and development environments
 
 ## Key Implementation Details
@@ -177,8 +182,16 @@ nix-build -A netencode-tests --argstr customTest 'echo "Custom test before pytes
 - Integration with Unix tooling philosophy
 
 ### Python
-- Bytes-based netencode construction module
+- Generator library with standardized API (`lib-python/netencode.py`)
+- Unified function names: `unit()`, `natural()`, `integer()`, `boolean()`, `text()`, `binary()`, `tag()`, `record()`, `list()`
 - Direct binary format generation without intermediate representations
+- Convenience functions for common patterns (`simple_record()`, `record_ordered()`)
+
+### API Standardization
+- **Unified naming**: All generator libraries use identical function names
+- **Cross-language compatibility**: Same logical operations work identically everywhere
+- **Consistent output**: All languages produce identical netencode for same data
+- **Documentation**: Single API reference covers all language implementations
 
 ## Commit Message Format
 

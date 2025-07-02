@@ -358,6 +358,134 @@ Thus, if you restrict your parser to a length field of 4 bytes,
 it should also never parse anything longer than 1024 bytes for the value
 (plus 1 byte for the type tag, 4 bytes for the length, and 2 bytes for the separator & ending character).
 
+## Generator Libraries
+
+The netencode ecosystem provides generator libraries in multiple languages with a unified API. All languages use identical function names for consistent cross-language development.
+
+### Unified API Reference
+
+All generator libraries provide these functions:
+
+| Function | Purpose | Example Usage |
+|----------|---------|---------------|
+| `unit()` | Create unit value | `unit()` → `u,` |
+| `natural(n)` | Create natural number (unsigned 64-bit) | `natural(42)` → `n:42,` |
+| `integer(n)` | Create signed integer (64-bit) | `integer(-10)` → `i:-10,` |
+| `boolean(b)` | Create boolean as tagged unit | `boolean(true)` → `<4:true\|u,` |
+| `text(s)` | Create UTF-8 text string | `text("hello")` → `t5:hello,` |
+| `binary(data)` | Create binary data | `binary(b"\xff\x00")` → `b2:\xff\x00,` |
+| `tag(name, value)` | Create tagged value | `tag("status", text("ok"))` → `<6:status\|t2:ok,` |
+| `record(fields)` | Create record from fields | `record([("name", text("Alice"))])` → `{...}` |
+| `list(items)` | Create list from items | `list([text("a"), text("b")])` → `[...]` |
+
+### Language-Specific Usage
+
+#### Python (`lib-python/netencode.py`)
+```python
+import netencode as ne
+
+# Basic types
+user_record = ne.record([
+    ("name", ne.text("Alice")),
+    ("age", ne.natural(30)),
+    ("active", ne.boolean(True))
+])
+
+# Convenience function for sorted fields
+user_record = ne.simple_record(
+    name=ne.text("Alice"),
+    age=ne.natural(30),
+    active=ne.boolean(True)
+)
+```
+
+#### Rust (`lib-rust/netencode.rs`)
+```rust
+use netencode::T;
+
+// Type-safe constructor functions
+let user_record = T::record([
+    ("name", T::text("Alice")),
+    ("age", T::natural(30)),
+    ("active", T::boolean(true))
+]);
+
+// Ergonomic with Into<> traits
+let user_record = T::record([
+    ("name", "Alice"),  // Auto-converts to T::text
+    ("age", 30u64),     // Auto-converts to T::natural
+    ("active", true)    // Auto-converts to T::boolean
+]);
+```
+
+#### Haskell (`lib-haskell/Netencode.hs`)
+```haskell
+import Netencode
+
+-- Functional style with type safety
+userRecord = record [
+    ("name", text "Alice"),
+    ("age", natural 30),
+    ("active", boolean True)
+]
+```
+
+#### Nix (`lib-nix/gen.nix`)
+```nix
+with (import ./lib-nix/gen.nix);
+
+# Functional Nix expressions
+user-record = record {
+  name = text "Alice";
+  age = natural 30;
+  active = boolean true;
+};
+
+# Or using dwim for automatic type detection
+user-record-auto = dwim {
+  name = "Alice";    # Automatically becomes text
+  age = 30;          # Automatically becomes natural
+  active = true;     # Automatically becomes boolean
+};
+```
+
+### Cross-Language Compatibility
+
+All generator libraries produce identical output for the same logical data:
+
+```python
+# Python
+ne.simple_record(name=ne.text("Alice"), age=ne.natural(30))
+```
+
+```rust
+// Rust  
+T::record([("name", "Alice"), ("age", 30u64)])
+```
+
+```haskell
+-- Haskell
+record [("name", text "Alice"), ("age", natural 30)]
+```
+
+```nix
+# Nix
+record { name = text "Alice"; age = natural 30; }
+```
+
+All produce: `{25:<3:age|n:30,<4:name|t5:Alice,}`
+
+### Directory Structure
+
+The generator libraries are organized by language implementation:
+
+```
+lib-python/netencode.py     # Python generator library
+lib-rust/netencode.rs       # Rust generator library  
+lib-haskell/Netencode.hs    # Haskell generator library
+lib-nix/gen.nix             # Nix generator functions
+```
+
 ## CLI Tools
 
 The netencode ecosystem provides several command-line tools for working with data pipelines:

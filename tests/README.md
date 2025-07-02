@@ -11,8 +11,9 @@ The test suite is written in Python using pytest and split into offline and netw
 - **`test_netencode_py.py`** - Python module unit tests (22 tests)
 - **`test_network.py`** - Network-requiring tests (2 tests, GitHub API and nix flake)
 - **`conftest.py`** - Shared utilities and fixtures
-- **`netencode_py.py`** - Python module for constructing netencode data
 - **`pytest.ini`** - Pytest configuration with network markers
+
+Note: The Python netencode module is now located at `lib-python/netencode.py` and uses standardized API function names.
 
 ## Running Tests
 
@@ -114,14 +115,14 @@ Tests for every example mentioned in the README to ensure documentation accuracy
 
 ### Python Module Tests (`test_netencode_py.py`) - 22 tests
 
-Unit tests for the Python netencode construction module:
+Unit tests for the Python netencode construction module using the standardized API:
 
-- Basic type constructors (unit, natural, integer, boolean, text, binary)
-- Composite types (tags, records, lists)
-- Field ordering and sorting
-- Complex nested structures
-- Unicode handling
-- Error handling and validation
+- **Basic type constructors**: `unit()`, `natural()`, `integer()`, `boolean()`, `text()`, `binary()`
+- **Composite types**: `tag()`, `record()`, `list()`
+- **Field ordering and sorting**: Records maintain insertion order or sort alphabetically
+- **Complex nested structures**: Records containing lists, lists containing records
+- **Unicode handling**: Proper UTF-8 encoding for text values
+- **Error handling and validation**: Type checking and boundary conditions
 
 ### Network Tests (`test_network.py`) - 2 tests
 
@@ -162,12 +163,18 @@ The `tests/shell.nix` provides a lightweight development environment:
 
 ### Python Netencode Module
 
-The `netencode_py.py` module provides utilities for constructing test data:
+The `lib-python/netencode.py` module provides utilities for constructing test data using the standardized API:
 
 - `ne.unit()` → `b"u,"`
 - `ne.text("hello")` → `b"t5:hello,"`
 - `ne.natural(42)` → `b"n:42,"`
-- `ne.simple_record(name=ne.text("Alice"))` → complete record with sorted fields
+- `ne.integer(-10)` → `b"i:-10,"`
+- `ne.boolean(True)` → `b"<4:true|u,"`
+- `ne.binary(b"data")` → `b"b4:data,"`
+- `ne.tag("status", ne.text("ok"))` → `b"<6:status|t2:ok,"`
+- `ne.record([("name", ne.text("Alice"))])` → complete record
+- `ne.list([ne.text("a"), ne.text("b")])` → complete list
+- `ne.simple_record(name=ne.text("Alice"))` → record with sorted fields
 - `ne.record_ordered()` → record with explicit field ordering
 
 ### Tool Discovery
