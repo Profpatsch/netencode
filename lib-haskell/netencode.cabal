@@ -71,3 +71,17 @@ library
         attoparsec,
         semigroupoids,
         selective
+
+test-suite generator-tests
+    import: common-options
+    type: exitcode-stdio-1.0
+    main-is: GeneratorSpec.hs
+    hs-source-dirs: test
+    build-depends:
+        base >=4.15 && <5,
+        netencode,
+        my-prelude,
+        bytestring,
+        text,
+        hspec,
+        nonempty-containers

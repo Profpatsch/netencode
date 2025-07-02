@@ -28,6 +28,8 @@ pkgs.mkShell {
       h.ansi-terminal
       h.nicify-lib
       h.case-insensitive
+      h.prettyprinter
+      h.optparse-applicative
     ]))
     pkgs.haskellPackages.cabal-install
     pkgs.haskellPackages.haskell-language-server

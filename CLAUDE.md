@@ -71,24 +71,12 @@ nix-build -A netencode-tests --arg testFiles '"test_integration.py"' --arg pytes
 # Run custom commands with access to all netencode tools
 nix-build -A netencode-tests --arg customTest ./path/to/test-script.sh
 
-# Example custom test script (test-script.sh):
-#!/bin/bash
+# Example custom test script (./test-script):
 echo "Testing specific functionality..."
 echo '"hello"' | json-to-netencode | netencode-pretty
 echo "Custom test completed"
 
-# Multi-line testing with immediate feedback
-nix-build -A netencode-tests --arg customTest "$(cat <<'EOF'
-#!/bin/bash
-echo "Testing multiple formats:"
-echo '"short"' | json-to-netencode | netencode-pretty
-echo '"This is a very long text that definitely exceeds the forty character limit"' | json-to-netencode | netencode-pretty
-EOF
-)"
-
-# Combine custom tests with regular pytest
-nix-build -A netencode-tests --arg customTest ./my-test.sh --arg testFiles '"test_integration.py"'
-```
+# you can write the test, then call nix-build with the arg, then delete the file again at the very end
 
 #### Manual Testing (Network Tests Only)
 

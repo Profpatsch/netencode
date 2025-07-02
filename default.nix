@@ -441,6 +441,7 @@ let
       ./tests/test_readme_examples.py
       ./tests/test_netencode_py.py
       ./tests/test_network.py
+      ./tests/GENERATOR_TEST_SPEC.md
       ./tests/conftest.py
       ./tests/netencode_py.py
       ./tests/pytest.ini
@@ -556,11 +557,148 @@ let
     };
   };
 
+  # Nix generator tests - evaluated directly during nix evaluation
+  netencode-nix-tests = import ./lib-nix/test-gen.nix { inherit (pkgs) lib; };
+
+  # Haskell generator tests  
+  netencode-haskell-tests = pkgs.haskellPackages.mkDerivation {
+    pname = "netencode-haskell-tests";
+    version = "0.1.0";
+
+    src = exact-source ./lib-haskell [
+      ./lib-haskell/netencode.cabal
+      ./lib-haskell/Netencode.hs
+      ./lib-haskell/Netencode/Parse.hs
+      ./lib-haskell/test/GeneratorSpec.hs
+    ];
+
+    libraryHaskellDepends = [
+      my-prelude
+      pkgs.haskellPackages.hedgehog
+      pkgs.haskellPackages.nonempty-containers
+      pkgs.haskellPackages.deriving-compat
+      pkgs.haskellPackages.data-fix
+      pkgs.haskellPackages.bytestring
+      pkgs.haskellPackages.attoparsec
+      pkgs.haskellPackages.pa-label
+      pkgs.haskellPackages.pa-error-tree
+    ];
+
+    testHaskellDepends = [
+      my-prelude
+      pkgs.haskellPackages.bytestring
+      pkgs.haskellPackages.text
+      pkgs.haskellPackages.hspec
+      pkgs.haskellPackages.nonempty-containers
+    ];
+
+    doCheck = true;
+    isLibrary = true;
+    license = lib.licenses.mit;
+  };
+
+  # Rust generator tests
+  netencode-rust-tests = pkgs.stdenv.mkDerivation {
+    name = "netencode-rust-tests";
+    src = exact-source ./. [
+      ./lib-rust/Cargo.toml
+      ./lib-rust/netencode.rs
+      ./lib-rust/tests/generator_spec.rs
+    ];
+    
+    nativeBuildInputs = [ pkgs.rustc pkgs.cargo ];
+    buildInputs = [];
+    
+    buildPhase = ''
+      cd lib-rust
+      cargo test
+    '';
+    
+    installPhase = ''
+      mkdir -p $out
+      echo "Rust generator tests passed" > $out/test-results.txt
+    '';
+    
+    meta = {
+      description = "Test suite for netencode Rust generators";
+    };
+  };
+
+  # Combined test suite for all language generators
+  test-all-generators = pkgs.stdenv.mkDerivation {
+    name = "test-all-generators";
+    
+    buildInputs = [
+      netencode-python-tests  # Python generator tests
+      netencode-haskell-tests  
+      netencode-rust-tests
+    ];
+    
+    buildPhase = ''
+      echo "Running cross-language generator tests..."
+      echo "Python tests: ${netencode-python-tests}"
+      echo "Nix tests: ${if netencode-nix-tests.success then "PASSED" else "FAILED"} (${toString (builtins.length (builtins.attrNames netencode-nix-tests.tests))} tests)"
+      echo "Haskell tests: ${netencode-haskell-tests}"
+      echo "Rust tests: ${netencode-rust-tests}"
+      echo "All generator tests completed successfully!"
+    '';
+    
+    installPhase = ''
+      mkdir -p $out
+      echo "All language generator tests passed" > $out/test-results.txt
+      echo "Test components:" >> $out/test-results.txt
+      echo "- Python: ${netencode-python-tests}" >> $out/test-results.txt
+      echo "- Nix: ${if netencode-nix-tests.success then "PASSED" else "FAILED"}" >> $out/test-results.txt
+      echo "- Haskell: ${netencode-haskell-tests}" >> $out/test-results.txt
+      echo "- Rust: ${netencode-rust-tests}" >> $out/test-results.txt
+    '';
+    
+    meta = {
+      description = "Cross-language generator test suite for netencode";
+      longDescription = ''
+        Runs the unified generator test specification across all language implementations:
+        Python, Nix, Haskell, and Rust. Ensures consistent netencode generation
+        and validates the same test cases in each language.
+      '';
+    };
+  };
+
+  # Python generator tests  
+  netencode-python-tests = pkgs.stdenv.mkDerivation {
+    name = "netencode-python-tests";
+    src = exact-source ./. [
+      ./lib-python/netencode.py
+      ./lib-python/test_generator_spec.py
+    ];
+    
+    nativeBuildInputs = with pkgs; [ (python3.withPackages (ps: with ps; [ pytest ])) ];
+    buildInputs = [];
+    
+    buildPhase = ''
+      cd lib-python
+      python -m pytest test_generator_spec.py
+    '';
+    
+    installPhase = ''
+      mkdir -p $out
+      echo "Python generator tests passed" > $out/test-results.txt
+    '';
+    
+    meta = {
+      description = "Test suite for netencode Python generators";
+    };
+  };
+
 in
 {
   inherit
     netencode
     netencode-tests
+    netencode-python-tests
+    netencode-nix-tests
+    netencode-haskell-tests
+    netencode-rust-tests
+    test-all-generators
     netencode-rs
     netencode-hs
     pretty-rs

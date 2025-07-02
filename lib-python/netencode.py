@@ -44,7 +44,7 @@ def boolean(value: bool) -> bytes:
 def text(value: str) -> bytes:
     """Create a netencode text string (UTF-8)."""
     encoded = value.encode('utf-8')
-    return f"t{len(encoded)}:{value},".encode('utf-8')
+    return f"t{len(encoded)}:".encode('utf-8') + encoded + b","
 
 
 def binary(value: bytes) -> bytes:
@@ -55,7 +55,7 @@ def binary(value: bytes) -> bytes:
 def tag(tag_name: str, value: bytes) -> bytes:
     """Create a netencode tagged value."""
     tag_encoded = tag_name.encode('utf-8')
-    return f"<{len(tag_encoded)}:{tag_name}|".encode('utf-8') + value
+    return f"<{len(tag_encoded)}:".encode('utf-8') + tag_encoded + b"|" + value
 
 
 def record(fields: Union[Dict[str, bytes], OrderedDict, List[tuple]]) -> bytes:
