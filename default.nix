@@ -433,7 +433,7 @@ let
   '';
 
 
-  netencode-tests = { testFiles ? "", pytestArgs ? "", customTest ? "" }: pkgs.stdenv.mkDerivation {
+  netencode-tests = { testFiles ? "", pytestArgs ? "", customTest ? null }: pkgs.stdenv.mkDerivation {
     name = "netencode-tests";
     
     src = exact-source ./. [
@@ -477,17 +477,16 @@ let
       export NETENCODE_TO_ENV="${netencode-to-env}/bin/netencode-to-env"
       export NETENCODE_PRETTY="${pretty}/bin/netencode-pretty"
       
-      # Run custom test if provided
-      if [ -n "${customTest}" ] && [ "${customTest}" != "" ]; then
-        echo "=== Running custom test ==="
-        echo "Command: ${customTest}"
-        bash <<'EOF'
-${customTest}
-EOF
-        echo "=== Custom test completed ==="
-        echo ""
-      fi
-      
+      # Include custom test file & run if provided
+      ${if customTest != null
+        then ''
+          echo "=== Running custom test ==="
+          echo "Command: ${customTest}"
+          source ${customTest}
+          echo "=== Custom test completed ==="
+          echo ""
+        '' else ""}
+
       # Change to tests directory
       cd tests
       

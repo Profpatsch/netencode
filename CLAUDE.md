@@ -65,6 +65,31 @@ nix-build -A netencode-tests --arg pytestArgs '"-v"'
 nix-build -A netencode-tests --arg testFiles '"test_integration.py"' --arg pytestArgs '"-v"'
 ```
 
+#### Ad-hoc Custom Testing
+
+```bash
+# Run custom commands with access to all netencode tools
+nix-build -A netencode-tests --arg customTest ./path/to/test-script.sh
+
+# Example custom test script (test-script.sh):
+#!/bin/bash
+echo "Testing specific functionality..."
+echo '"hello"' | json-to-netencode | netencode-pretty
+echo "Custom test completed"
+
+# Multi-line testing with immediate feedback
+nix-build -A netencode-tests --arg customTest "$(cat <<'EOF'
+#!/bin/bash
+echo "Testing multiple formats:"
+echo '"short"' | json-to-netencode | netencode-pretty
+echo '"This is a very long text that definitely exceeds the forty character limit"' | json-to-netencode | netencode-pretty
+EOF
+)"
+
+# Combine custom tests with regular pytest
+nix-build -A netencode-tests --arg customTest ./my-test.sh --arg testFiles '"test_integration.py"'
+```
+
 #### Manual Testing (Network Tests Only)
 
 ```bash
@@ -132,28 +157,6 @@ cabal build exec-helpers       # Utilities
 ```bash
 # In exec-helpers/ directory
 cargo build
-```
-
-#### Ad-hoc Testing
-```bash
-# Quick ad-hoc testing with custom commands (no pytest)
-nix-build -A netencode-tests --argstr testFiles "" --argstr customTest 'echo "test" | json-to-netencode | netencode-pretty'
-
-# Test new length formatting
-nix-build -A netencode-tests --argstr testFiles "" --argstr customTest 'echo "This is a very long text that exceeds forty chars" | json-to-netencode | netencode-pretty'
-
-# Test complex structures  
-nix-build -A netencode-tests --argstr testFiles "" --argstr customTest 'echo "{\"user\": {\"name\": \"Alice\"}}" | json-to-netencode | netencode-pretty'
-
-# Multi-line custom tests
-nix-build -A netencode-tests --argstr testFiles "" --argstr customTest '
-echo "Testing multiple formats:"
-echo "\"short\"" | json-to-netencode | netencode-pretty
-echo "\"This is a very long text that definitely exceeds the forty character limit\"" | json-to-netencode | netencode-pretty
-'
-
-# Run custom test alongside regular tests
-nix-build -A netencode-tests --argstr customTest 'echo "Custom test before pytest"'
 ```
 
 ## Project Structure
