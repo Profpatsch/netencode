@@ -131,6 +131,28 @@ cabal build exec-helpers       # Utilities
 cargo build
 ```
 
+#### Ad-hoc Testing
+```bash
+# Quick ad-hoc testing with custom commands (no pytest)
+nix-build -A netencode-tests --argstr testFiles "" --argstr customTest 'echo "test" | json-to-netencode | netencode-pretty'
+
+# Test new length formatting
+nix-build -A netencode-tests --argstr testFiles "" --argstr customTest 'echo "This is a very long text that exceeds forty chars" | json-to-netencode | netencode-pretty'
+
+# Test complex structures  
+nix-build -A netencode-tests --argstr testFiles "" --argstr customTest 'echo "{\"user\": {\"name\": \"Alice\"}}" | json-to-netencode | netencode-pretty'
+
+# Multi-line custom tests
+nix-build -A netencode-tests --argstr testFiles "" --argstr customTest '
+echo "Testing multiple formats:"
+echo "\"short\"" | json-to-netencode | netencode-pretty
+echo "\"This is a very long text that definitely exceeds the forty character limit\"" | json-to-netencode | netencode-pretty
+'
+
+# Run custom test alongside regular tests
+nix-build -A netencode-tests --argstr customTest 'echo "Custom test before pytest"'
+```
+
 ## Project Structure
 
 - Multi-package Cabal project (`cabal.project`)

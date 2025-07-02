@@ -432,7 +432,8 @@ let
     }
   '';
 
-  netencode-tests = { testFiles ? "", pytestArgs ? "" }: pkgs.stdenv.mkDerivation {
+
+  netencode-tests = { testFiles ? "", pytestArgs ? "", customTest ? "" }: pkgs.stdenv.mkDerivation {
     name = "netencode-tests";
     
     src = exact-source ./tests [
@@ -451,14 +452,7 @@ let
     
     buildInputs = [
       # All netencode tools needed for testing
-      pretty
-      netencode-mustache
-      netencode-record-get
-      netencode-to-env
-      env-to-netencode
-      json-to-netencode
-      netencode-filter
-      netencode-plain
+      netencode
     ];
     
     # Set up environment variables for tools (like shell.nix does)
@@ -481,6 +475,17 @@ let
       export ENV_TO_NETENCODE="${env-to-netencode}/bin/env-to-netencode"
       export NETENCODE_TO_ENV="${netencode-to-env}/bin/netencode-to-env"
       export NETENCODE_PRETTY="${pretty}/bin/netencode-pretty"
+      
+      # Run custom test if provided
+      if [ -n "${customTest}" ] && [ "${customTest}" != "" ]; then
+        echo "=== Running custom test ==="
+        echo "Command: ${customTest}"
+        bash <<'EOF'
+${customTest}
+EOF
+        echo "=== Custom test completed ==="
+        echo ""
+      fi
       
       # Determine which tests to run
       if [ -n "${testFiles}" ]; then
