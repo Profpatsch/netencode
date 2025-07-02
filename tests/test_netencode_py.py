@@ -2,7 +2,7 @@
 Test the netencode_py module itself.
 """
 import pytest
-import netencode_py as ne
+import netencode as ne
 from collections import OrderedDict
 
 

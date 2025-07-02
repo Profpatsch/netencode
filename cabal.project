@@ -1,5 +1,5 @@
 packages:
-  ./netencode.cabal
-  ./arglib/arglib-netencode.cabal
-  ./exec-helpers/exec-helpers.cabal
+  ./lib-haskell/netencode.cabal
+  ./lib-haskell/arglib/arglib-netencode.cabal
+  ./lib-rust/exec-helpers/exec-helpers.cabal
   ./third-party/my-prelude/my-prelude.cabal

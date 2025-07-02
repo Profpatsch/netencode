@@ -6,7 +6,7 @@ hexdump formatting, and complex structure pretty-printing.
 """
 import pytest
 from conftest import run_tool
-import netencode_py as ne
+import netencode as ne
 
 
 class TestPrettyPrinterBasics:

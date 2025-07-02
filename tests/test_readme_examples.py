@@ -14,7 +14,7 @@ DO NOT just fix tests - always verify and update README examples to match!
 import pytest
 import subprocess
 from conftest import run_tool, get_tool_path
-import netencode_py as ne
+import netencode as ne
 
 
 class TestReadmeExamples:

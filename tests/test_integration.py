@@ -5,7 +5,7 @@ Refactored to use direct netencode construction instead of JSON conversion.
 import pytest
 import subprocess
 from conftest import run_tool, get_tool_path
-import netencode_py as ne
+import netencode as ne
 
 
 class TestJSONToNetencode:

@@ -5,9 +5,9 @@ let
   rust-writers = import ./nix-lib/rust-writers.nix { inherit pkgs lib drvSeqL; };
   rust-crates = import ./nix-lib/rust-crates.nix { inherit pkgs lib; };
   exact-source = import ./nix-lib/exact-source.nix { inherit pkgs lib; };
-  exec-helpers = import ./exec-helpers/default.nix { inherit pkgs lib rust-writers exact-source; };
+  exec-helpers = import ./lib-rust/exec-helpers/default.nix { inherit pkgs lib rust-writers exact-source; };
   drvSeqL = import ./nix-lib/drvSeqL.nix { inherit pkgs lib; };
-  arglib = import ./arglib/netencode.nix { inherit pkgs lib rust-writers exact-source exec-helpers gen netencode-rs netencode-hs; };
+  arglib = import ./lib-haskell/arglib/netencode.nix { inherit pkgs lib rust-writers exact-source exec-helpers gen netencode-rs netencode-hs; };
   my-prelude = import ./third-party/my-prelude/default.nix { inherit pkgs lib exact-source; };
 
   netencode-rs = rust-writers.rustSimpleLib
@@ -19,16 +19,16 @@ let
         exec-helpers.exec-helpers-rs
       ];
     }
-    (builtins.readFile ./netencode.rs);
+    (builtins.readFile ./lib-rust/netencode.rs);
 
   netencode-hs = pkgs.haskellPackages.mkDerivation {
     pname = "netencode";
     version = "0.1.0";
 
-    src = exact-source ./. [
-      ./netencode.cabal
-      ./Netencode.hs
-      ./Netencode/Parse.hs
+    src = exact-source ./lib-haskell [
+      ./lib-haskell/netencode.cabal
+      ./lib-haskell/Netencode.hs
+      ./lib-haskell/Netencode/Parse.hs
     ];
 
     libraryHaskellDepends = [
@@ -47,7 +47,7 @@ let
     license = lib.licenses.mit;
   };
 
-  gen = import ./gen.nix { inherit lib; };
+  gen = import ./lib-nix/gen.nix { inherit lib; };
 
   pretty-rs = rust-writers.rustSimpleLib
     {
@@ -56,7 +56,7 @@ let
         netencode-rs
       ];
     }
-    (builtins.readFile ./pretty.rs);
+    (builtins.readFile ./lib-rust/pretty.rs);
 
   pretty = rust-writers.rustSimple
     {
@@ -90,7 +90,7 @@ let
         rust-crates.mustache
       ];
     }
-    (builtins.readFile ./netencode-mustache.rs);
+    (builtins.readFile ./lib-rust/tools/netencode-mustache.rs);
 
 
   netencode-record-get = rust-writers.rustSimple
@@ -436,7 +436,7 @@ let
   netencode-tests = { testFiles ? "", pytestArgs ? "", customTest ? "" }: pkgs.stdenv.mkDerivation {
     name = "netencode-tests";
     
-    src = exact-source ./tests [
+    src = exact-source ./. [
       ./tests/test_integration.py
       ./tests/test_readme_examples.py
       ./tests/test_netencode_py.py
@@ -444,6 +444,7 @@ let
       ./tests/conftest.py
       ./tests/netencode_py.py
       ./tests/pytest.ini
+      ./lib-python/netencode.py
     ];
     
     nativeBuildInputs = with pkgs; [
@@ -486,6 +487,9 @@ EOF
         echo "=== Custom test completed ==="
         echo ""
       fi
+      
+      # Change to tests directory
+      cd tests
       
       # Determine which tests to run
       if [ -n "${testFiles}" ]; then

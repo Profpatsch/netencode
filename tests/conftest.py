@@ -2,9 +2,13 @@
 Shared pytest configuration and utilities for netencode integration tests.
 """
 import os
+import sys
 import subprocess
 import pytest
 from typing import Optional, List, Union
+
+# Add lib-python to Python path for importing netencode module
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'lib-python'))
 
 
 def get_tool_path(tool_name: str) -> str:
