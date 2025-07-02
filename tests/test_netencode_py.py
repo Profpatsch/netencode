@@ -130,18 +130,18 @@ class TestCompositeTypes:
         # Content: <3:foo|i:42,<3:bar|t3:baz, = 26 bytes
         assert record.startswith(b"{26:")
     
-    def test_list_values(self):
+    def test_list(self):
         """Test list construction."""
         # Empty list
-        empty_list = ne.list_values([])
+        empty_list = ne.list([])
         assert empty_list == b"[0:]"
         
         # Single item list
-        single_list = ne.list_values([b"t5:hello,"])
+        single_list = ne.list([b"t5:hello,"])
         assert single_list == b"[9:t5:hello,]"
         
         # Multi-item list
-        multi_list = ne.list_values([b"t3:foo,", b"i:42,", b"u,"])
+        multi_list = ne.list([b"t3:foo,", b"i:42,", b"u,"])
         # Content: t3:foo,i:42,u, = 14 bytes
         assert multi_list == b"[14:t3:foo,i:42,u,]"
     
@@ -177,7 +177,7 @@ class TestComplexScenarios:
     def test_nested_structures(self):
         """Test nested records and lists."""
         # Create nested record containing a list
-        inner_list = ne.list_values([ne.text("foo"), ne.text("bar")])
+        inner_list = ne.list([ne.text("foo"), ne.text("bar")])
         record = ne.record([("items", inner_list)])
         
         assert b"<5:items|[" in record
@@ -194,7 +194,7 @@ class TestComplexScenarios:
             "text_field", ne.text("hello"),
             "binary_field", ne.binary(b"data"),
             "tag_field", ne.tag("Some", ne.text("value")),
-            "list_field", ne.list_values([ne.text("a"), ne.text("b")])
+            "list_field", ne.list([ne.text("a"), ne.text("b")])
         )
         
         # Verify all field types are present

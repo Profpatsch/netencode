@@ -279,14 +279,14 @@ class TestListFormatting:
     
     def test_empty_list(self):
         """Test empty list formatting."""
-        empty_list = ne.list_values([])
+        empty_list = ne.list([])
         result = run_tool('netencode-pretty', stdin=empty_list)
         
         assert b'[ ]' in result.stdout
     
     def test_single_item_list(self):
         """Test list with single item."""
-        single_list = ne.list_values([ne.text("item")])
+        single_list = ne.list([ne.text("item")])
         result = run_tool('netencode-pretty', stdin=single_list)
         
         # Single item should be on one line (without extra spaces)
@@ -294,7 +294,7 @@ class TestListFormatting:
     
     def test_multi_item_list(self):
         """Test list with multiple items and proper indentation."""
-        multi_list = ne.list_values([
+        multi_list = ne.list([
             ne.text("first"),
             ne.natural(42),
             ne.boolean(True)
@@ -309,8 +309,8 @@ class TestListFormatting:
     
     def test_nested_list(self):
         """Test nested list formatting."""
-        inner_list = ne.list_values([ne.text("a"), ne.text("b")])
-        outer_list = ne.list_values([ne.text("outer"), inner_list])
+        inner_list = ne.list([ne.text("a"), ne.text("b")])
+        outer_list = ne.list([ne.text("outer"), inner_list])
         result = run_tool('netencode-pretty', stdin=outer_list)
         
         # Should show proper nesting
@@ -321,7 +321,7 @@ class TestListFormatting:
         """Test list containing records."""
         record1 = ne.simple_record(name=ne.text("Alice"))
         record2 = ne.simple_record(name=ne.text("Bob"))
-        record_list = ne.list_values([record1, record2])
+        record_list = ne.list([record1, record2])
         result = run_tool('netencode-pretty', stdin=record_list)
         
         assert b'Alice' in result.stdout
@@ -350,7 +350,7 @@ class TestComplexStructures:
             number_field=ne.natural(42),
             binary_field=ne.binary(b'\x00\x01\x02'),
             bool_field=ne.boolean(True),
-            list_field=ne.list_values([ne.text("item1"), ne.text("item2")])
+            list_field=ne.list([ne.text("item1"), ne.text("item2")])
         )
         result = run_tool('netencode-pretty', stdin=mixed_record)
         
@@ -505,17 +505,17 @@ class TestPrettyPrinterCompleteFormat:
     def test_list_formatting_complete(self):
         """Test exact list formatting including indentation."""
         # Empty list
-        empty_list = ne.list_values([])
+        empty_list = ne.list([])
         result = run_tool('netencode-pretty', stdin=empty_list)
         self.assert_exact_format(result, "[ ]")
         
         # Single item list (one line)
-        single_list = ne.list_values([ne.text("item")])
+        single_list = ne.list([ne.text("item")])
         result = run_tool('netencode-pretty', stdin=single_list)
         self.assert_exact_format(result, "[ t item,]")
         
         # Multi-item list (multi-line with indentation)
-        multi_list = ne.list_values([
+        multi_list = ne.list([
             ne.text("first"),
             ne.natural(42),
             ne.boolean(True)
@@ -533,7 +533,7 @@ class TestPrettyPrinterCompleteFormat:
         # Record containing a list
         record_with_list = ne.simple_record(
             name=ne.text("Alice"),
-            scores=ne.list_values([ne.natural(95), ne.natural(87)])
+            scores=ne.list([ne.natural(95), ne.natural(87)])
         )
         result = run_tool('netencode-pretty', stdin=record_with_list)
         expected = """  {
@@ -547,7 +547,7 @@ class TestPrettyPrinterCompleteFormat:
         self.assert_exact_format(result, expected)
         
         # List containing records
-        list_with_records = ne.list_values([
+        list_with_records = ne.list([
             ne.simple_record(name=ne.text("Alice")),
             ne.simple_record(name=ne.text("Bob"))
         ])
@@ -565,7 +565,7 @@ class TestPrettyPrinterCompleteFormat:
             number_field=ne.natural(42),
             binary_field=ne.binary(b'\xff\xfe\x00'),
             bool_field=ne.boolean(True),
-            list_field=ne.list_values([ne.text("item1"), ne.text("item2")])
+            list_field=ne.list([ne.text("item1"), ne.text("item2")])
         )
         result = run_tool('netencode-pretty', stdin=mixed_record)
         expected = """  {
@@ -591,7 +591,7 @@ class TestPrettyPrinterCompleteFormat:
             active=ne.boolean(True),
             metadata=ne.simple_record(
                 created=ne.text("2023-01-15"),
-                tags=ne.list_values([ne.text("admin"), ne.text("premium")])
+                tags=ne.list([ne.text("admin"), ne.text("premium")])
             )
         )
         result = run_tool('netencode-pretty', stdin=user_profile)

@@ -80,25 +80,25 @@ unit :: T
 unit = T $ Fix Unit
 
 -- | Create a boolean as a tagged unit
-bool :: Bool -> T
-bool False = tag "false" unit
-bool True = tag "true" unit
+boolean :: Bool -> T
+boolean False = tag "false" unit
+boolean True = tag "true" unit
 
 -- | Create a 64-bit natural
-n :: Word64 -> T
-n = T . Fix . N
+natural :: Word64 -> T
+natural = T . Fix . N
 
 -- | Create a 64-bit integer
-i :: Int64 -> T
-i = T . Fix . I
+integer :: Int64 -> T
+integer = T . Fix . I
 
 -- | Create a UTF-8 unicode text
 text :: Text -> T
 text = T . Fix . Text
 
 -- | Create an arbitrary bytestring
-bytes :: ByteString -> T
-bytes = T . Fix . Bytes
+binary :: ByteString -> T
+binary = T . Fix . Bytes
 
 -- | Create a tagged value from a tag name and a value
 tag :: Text -> T -> T
@@ -344,10 +344,10 @@ genNetencode =
     [ -- these are bundled into one Gen, so that scalar elements get chosen less frequently, and the generator produces nicely nested examples
       Gen.frequency
         [ (1, pure unit),
-          (1, n <$> Gen.element [0, 1, 5]),
-          (1, i <$> Gen.element [-1, 1, 5]),
+          (1, natural <$> Gen.element [0, 1, 5]),
+          (1, integer <$> Gen.element [-1, 1, 5]),
           (2, text <$> Gen.text (Range.linear 1 10) Gen.lower),
-          (2, bytes <$> Gen.bytes (Range.linear 1 10))
+          (2, binary <$> Gen.bytes (Range.linear 1 10))
         ]
     ]
     [ do

@@ -88,7 +88,7 @@ def record(fields: Union[Dict[str, bytes], OrderedDict, List[tuple]]) -> bytes:
     return f"{{{content_bytes}:".encode('utf-8') + content + b"}"
 
 
-def list_values(values: List[bytes]) -> bytes:
+def list(values: List[bytes]) -> bytes:
     """Create a netencode list from values."""
     content = b"".join(values)
     content_bytes = len(content)

@@ -387,7 +387,7 @@ class TestNetencodePlain:
 
     def test_list_passthrough(self):
         """Test that lists pass through unchanged."""
-        list_value = ne.list_values([ne.text("Alice"), ne.integer(30)])
+        list_value = ne.list([ne.text("Alice"), ne.integer(30)])
         result = run_tool("netencode-plain", stdin=list_value)
         assert result.stdout == list_value
 

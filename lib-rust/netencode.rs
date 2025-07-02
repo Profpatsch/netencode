@@ -29,6 +29,65 @@ pub enum T {
 }
 
 impl T {
+    /// Create a unit value
+    pub fn unit() -> T {
+        T::Unit
+    }
+
+    /// Create a natural number (unsigned 64-bit)
+    pub fn natural(n: u64) -> T {
+        T::N(n)
+    }
+
+    /// Create a signed integer (64-bit)
+    pub fn integer(n: i64) -> T {
+        T::I(n)
+    }
+
+    /// Create a boolean value as a tagged unit
+    pub fn boolean(b: bool) -> T {
+        if b {
+            T::tag("true", T::unit())
+        } else {
+            T::tag("false", T::unit())
+        }
+    }
+
+    /// Create a text string (UTF-8)
+    pub fn text<S: Into<String>>(s: S) -> T {
+        T::Text(s.into())
+    }
+
+    /// Create binary data
+    pub fn binary<B: Into<Vec<u8>>>(data: B) -> T {
+        T::Binary(data.into())
+    }
+
+    /// Create a tagged value
+    pub fn tag<S: Into<String>>(name: S, value: T) -> T {
+        T::Sum(Tag {
+            tag: name.into(),
+            val: Box::new(value),
+        })
+    }
+
+    /// Create a record from key-value pairs
+    pub fn record<K, I>(fields: I) -> T 
+    where
+        K: Into<String>,
+        I: IntoIterator<Item = (K, T)>,
+    {
+        let map = fields.into_iter()
+            .map(|(k, v)| (k.into(), v))
+            .collect::<IndexMap<String, T>>();
+        T::Record(map)
+    }
+
+    /// Create a list from values
+    pub fn list<I: IntoIterator<Item = T>>(items: I) -> T {
+        T::List(items.into_iter().collect())
+    }
+
     pub fn to_u<'a>(&'a self) -> U<'a> {
         match self {
             T::Unit => U::Unit,

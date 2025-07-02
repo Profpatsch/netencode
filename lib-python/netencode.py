@@ -8,7 +8,7 @@ and avoiding JSON parser limitations.
 All functions return bytes objects since netencode is a binary format.
 """
 
-from typing import Union, Dict, List, Any, OrderedDict
+from typing import Union, Dict, List, Any
 from collections import OrderedDict
 
 
@@ -72,8 +72,8 @@ def record(fields: Union[Dict[str, bytes], OrderedDict, List[tuple]]) -> bytes:
         # Convert regular dict to list of tuples sorted by key for consistency
         field_items = sorted(fields.items())
     elif isinstance(fields, OrderedDict):
-        field_items = list(fields.items())
-    elif isinstance(fields, list):
+        field_items = __builtins__['list'](fields.items())
+    elif isinstance(fields, __builtins__['list']):
         field_items = fields
     else:
         raise TypeError("fields must be dict, OrderedDict, or list of tuples")
@@ -88,11 +88,12 @@ def record(fields: Union[Dict[str, bytes], OrderedDict, List[tuple]]) -> bytes:
     return f"{{{content_bytes}:".encode('utf-8') + content + b"}"
 
 
-def list_values(values: List[bytes]) -> bytes:
+def list(values: List[bytes]) -> bytes:
     """Create a netencode list from values."""
     content = b"".join(values)
     content_bytes = len(content)
     return f"[{content_bytes}:".encode('utf-8') + content + b"]"
+
 
 
 # Convenience functions for common patterns

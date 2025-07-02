@@ -6,18 +6,14 @@ let
 
   unit = "u,";
 
-  n1 = b: if b then "n1:1," else "n1:0,";
+  # Create a natural number (unsigned)
+  natural = n: "n:${toString n},";
 
-  n = i: n: "n${toString i}:${toString n},";
-  i = i: n: "i${toString i}:${toString n},";
+  # Create a signed integer
+  integer = n: "i:${toString n},";
 
-  n3 = n 3;
-  n6 = n 6;
-  n7 = n 7;
-
-  i3 = i 3;
-  i6 = i 6;
-  i7 = i 7;
+  # Create a boolean value as tagged unit
+  boolean = b: if b then "<4:true|u," else "<5:false|u,";
 
   text = netstring "t" ",";
   binary = netstring "b" ",";
@@ -34,8 +30,8 @@ let
   dwim = val:
     let
       match = {
-        "bool" = n1;
-        "int" = i6;
+        "bool" = boolean;
+        "int" = integer;
         "string" = text;
         "set" = attrs:
           # it could be a derivation, then just return the path
@@ -56,13 +52,9 @@ in
 {
   inherit
     unit
-    n1
-    n3
-    n6
-    n7
-    i3
-    i6
-    i7
+    natural
+    integer
+    boolean
     text
     binary
     tag
