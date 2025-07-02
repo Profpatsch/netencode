@@ -50,7 +50,7 @@ impl Pretty {
             let truncated = format!("{}...", &s[..Self::TEXT_THRESHOLD]);
             Pretty::Single {
                 r#type: 't',
-                length: format!("[{}]", s.len()),
+                length: format!("{}", s.len()),
                 val: truncated,
                 trailer: ',',
             }
@@ -64,7 +64,7 @@ impl Pretty {
             if utf8_str.len() <= Self::TEXT_THRESHOLD {
                 Pretty::Single {
                     r#type: 'b',
-                    length: format!("[{}]", data.len()),
+                    length: format!("{}", data.len()),
                     val: utf8_str.to_string(),
                     trailer: ',',
                 }
@@ -73,7 +73,7 @@ impl Pretty {
                 let truncated = format!("{}...", &utf8_str[..Self::TEXT_THRESHOLD]);
                 Pretty::Single {
                     r#type: 'b',
-                    length: format!("[{}]", data.len()),
+                    length: format!("{}", data.len()),
                     val: truncated,
                     trailer: ',',
                 }
@@ -86,7 +86,7 @@ impl Pretty {
                 .join("");
             Pretty::Single {
                 r#type: 'b',
-                length: format!("[{}]", data.len()),
+                length: format!("{}", data.len()),
                 val: hex,
                 trailer: ',',
             }
@@ -95,7 +95,7 @@ impl Pretty {
             let lines = Self::format_hexdump(data);
             Pretty::MultiLine {
                 r#type: 'b',
-                length_info: format!("[{}]", data.len()),
+                length_info: format!("{}", data.len()),
                 lines,
                 trailer: ',',
             }

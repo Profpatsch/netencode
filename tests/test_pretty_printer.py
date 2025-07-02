@@ -70,7 +70,7 @@ class TestTextFormatting:
         
         # Should be truncated with length indicator
         assert b'...' in result.stdout
-        assert f'[{len(long_text)}]'.encode() in result.stdout
+        assert f'{len(long_text)} '.encode() in result.stdout
         assert b'This is a very long text that definitely...' in result.stdout
     
     def test_unicode_text_formatting(self):
@@ -104,7 +104,7 @@ class TestBinaryFormatting:
         result = run_tool('netencode-pretty', stdin=ne.binary(small_binary))
         
         # Should show as single-line hex with length indicator
-        assert b'b[4]' in result.stdout
+        assert b'b4 ' in result.stdout
         assert b'fffe0001' in result.stdout
     
     def test_binary_at_threshold(self):
@@ -114,7 +114,7 @@ class TestBinaryFormatting:
         result = run_tool('netencode-pretty', stdin=ne.binary(threshold_binary))
         
         # Should still be single line at exactly 16 bytes
-        assert b'b[16]' in result.stdout
+        assert b'b16 ' in result.stdout
         assert b'fffe000102030405060708090a0b0c0d' in result.stdout
     
     def test_large_binary_hexdump(self):
@@ -124,13 +124,13 @@ class TestBinaryFormatting:
         result = run_tool('netencode-pretty', stdin=ne.binary(large_binary))
         
         # Check if it's treated as binary or text
-        if b'b[64]' in result.stdout:
+        if b'b64' in result.stdout:
             # Binary format - check for hexdump
             assert b'00000000  ' in result.stdout  # Offset column
             assert b'|' in result.stdout  # ASCII column separators
         else:
             # Treated as text - just check it's truncated properly
-            assert b't[64]' in result.stdout
+            assert b't64 ' in result.stdout
             assert b'...' in result.stdout
     
     def test_binary_vs_text_detection(self):
@@ -139,7 +139,7 @@ class TestBinaryFormatting:
         result = run_tool('netencode-pretty', stdin=ne.binary(utf8_binary))
         
         # Should keep binary format (b prefix) but show text content
-        assert b'b[13] Hello, World!,' in result.stdout
+        assert b'b13 Hello, World!,' in result.stdout
     
     def test_non_utf8_binary(self):
         """Test binary data that is not valid UTF-8."""
@@ -147,7 +147,7 @@ class TestBinaryFormatting:
         result = run_tool('netencode-pretty', stdin=ne.binary(non_utf8))
         
         # Should be treated as binary with hex formatting
-        assert b'b[' in result.stdout
+        assert b'b' in result.stdout
         assert b'fffe' in result.stdout
     
     def test_hexdump_ascii_column(self):
@@ -165,7 +165,7 @@ class TestBinaryFormatting:
         result = run_tool('netencode-pretty', stdin=ne.binary(very_large_binary))
         
         # Should truncate after maximum rows and show truncation message
-        assert b'b[512]' in result.stdout
+        assert b'b512' in result.stdout
         if b'...' in result.stdout:
             assert b'more bytes' in result.stdout
 
@@ -362,7 +362,7 @@ class TestComplexStructures:
         assert (b'\x00\x01\x02' in result.stdout or 
                 b'000102' in result.stdout or 
                 b'00 01 02' in result.stdout or
-                b'b[3]' in result.stdout)
+                b'b3 ' in result.stdout)
         assert b'true' in result.stdout
         assert b'item1' in result.stdout
     
@@ -427,7 +427,7 @@ class TestPrettyPrinterCompleteFormat:
         # Long text with truncation
         long_text = "This is a very long text that definitely exceeds the forty character limit"
         result = run_tool('netencode-pretty', stdin=ne.text(long_text))
-        expected = f"t[{len(long_text)}] This is a very long text that definitely...,"
+        expected = f"t{len(long_text)} This is a very long text that definitely...,"
         self.assert_exact_format(result, expected)
     
     def test_binary_formatting_complete(self):
@@ -435,17 +435,17 @@ class TestPrettyPrinterCompleteFormat:
         # Small non-UTF-8 binary (single line hex)
         small_binary = b'\xff\xfe\x00\x01'
         result = run_tool('netencode-pretty', stdin=ne.binary(small_binary))
-        self.assert_exact_format(result, "b[4] fffe0001,")
+        self.assert_exact_format(result, "b4 fffe0001,")
         
         # UTF-8 binary (shows as text with b prefix)
         utf8_binary = "Hello, World!".encode('utf-8')
         result = run_tool('netencode-pretty', stdin=ne.binary(utf8_binary))
-        self.assert_exact_format(result, "b[13] Hello, World!,")
+        self.assert_exact_format(result, "b13 Hello, World!,")
         
         # Large non-UTF-8 binary (hexdump format)
         large_binary = b'\xff\xfe' + bytes(range(2, 32))  # 32 bytes starting with non-UTF-8
         result = run_tool('netencode-pretty', stdin=ne.binary(large_binary))
-        expected = """b[32]
+        expected = """b32
 00000000  ff fe 02 03 04 05 06 07  08 09 0a 0b 0c 0d 0e 0f  |................|
 00000010  10 11 12 13 14 15 16 17  18 19 1a 1b 1c 1d 1e 1f  |................|"""
         self.assert_exact_format(result, expected)
@@ -569,7 +569,7 @@ class TestPrettyPrinterCompleteFormat:
         )
         result = run_tool('netencode-pretty', stdin=mixed_record)
         expected = """  {
-    < binary_field |b[3] fffe00,
+    < binary_field |b3 fffe00,
     < bool_field |< true |u ,
     < list_field |
       [
