@@ -150,9 +150,9 @@ impl Pretty {
 
     pub fn from_u<'a>(u: U<'a>) -> Pretty {
         match u {
-            U::Unit => Self::scalar('u', "", ""),
-            U::N(n) => Self::scalar('n', ":", n),
-            U::I(i) => Self::scalar('i', ":", i),
+            U::Unit => Self::scalar('u', ""),
+            U::N(n) => Self::scalar('n', n),
+            U::I(i) => Self::scalar('i', i),
             U::Text(s) => Self::format_text(s),
             U::Binary(s) => Self::format_binary(s),
             U::Sum(Tag { tag, val }) => Self::pretty_tag(tag, Self::from_u(*val)),
@@ -176,13 +176,13 @@ impl Pretty {
         }
     }
 
-    fn scalar<D>(r#type: char, length: &str, d: D) -> Pretty
+    fn scalar<D>(r#type: char, d: D) -> Pretty
     where
         D: std::fmt::Display,
     {
         Pretty::Single {
             r#type,
-            length: length.to_string(),
+            length: String::new(),
             val: format!("{}", d),
             trailer: ',',
         }

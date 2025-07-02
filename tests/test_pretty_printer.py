@@ -20,12 +20,12 @@ class TestPrettyPrinterBasics:
     def test_natural_number_formatting(self):
         """Test natural number formatting."""
         result = run_tool('netencode-pretty', stdin=ne.natural(42))
-        assert result.stdout.strip() == b'n: 42,'
+        assert result.stdout.strip() == b'n 42,'
     
     def test_integer_formatting(self):
         """Test signed integer formatting."""
         result = run_tool('netencode-pretty', stdin=ne.integer(-10))
-        assert result.stdout.strip() == b'i: -10,'
+        assert result.stdout.strip() == b'i -10,'
     
     def test_large_numbers(self):
         """Test formatting of large numbers."""
@@ -399,11 +399,11 @@ class TestPrettyPrinterCompleteFormat:
         
         # Natural number
         result = run_tool('netencode-pretty', stdin=ne.natural(42))
-        self.assert_exact_format(result, "n: 42,")
+        self.assert_exact_format(result, "n 42,")
         
         # Integer
         result = run_tool('netencode-pretty', stdin=ne.integer(-10))
-        self.assert_exact_format(result, "i: -10,")
+        self.assert_exact_format(result, "i -10,")
         
         # Boolean true
         result = run_tool('netencode-pretty', stdin=ne.boolean(True))
@@ -483,7 +483,7 @@ class TestPrettyPrinterCompleteFormat:
         )
         result = run_tool('netencode-pretty', stdin=multi_record)
         expected = """  {
-    < age |n: 30,
+    < age |n 30,
     < name |t Alice,
   }"""
         self.assert_exact_format(result, expected)
@@ -497,7 +497,7 @@ class TestPrettyPrinterCompleteFormat:
         result = run_tool('netencode-pretty', stdin=three_field_record)
         expected = """  {
     < active |< true |u ,
-    < age |n: 30,
+    < age |n 30,
     < name |t Alice,
   }"""
         self.assert_exact_format(result, expected)
@@ -523,7 +523,7 @@ class TestPrettyPrinterCompleteFormat:
         result = run_tool('netencode-pretty', stdin=multi_list)
         expected = """  [
     t first,
-    n: 42,
+    n 42,
     < true |u ,
   ]"""
         self.assert_exact_format(result, expected)
@@ -540,8 +540,8 @@ class TestPrettyPrinterCompleteFormat:
     < name |t Alice,
     < scores |
       [
-        n: 95,
-        n: 87,
+        n 95,
+        n 87,
       ]
   }"""
         self.assert_exact_format(result, expected)
@@ -576,7 +576,7 @@ class TestPrettyPrinterCompleteFormat:
         t item1,
         t item2,
       ]
-    < number_field |n: 42,
+    < number_field |n 42,
     < text_field |t Hello,
   }"""
         self.assert_exact_format(result, expected)
@@ -598,7 +598,7 @@ class TestPrettyPrinterCompleteFormat:
         expected = """  {
     < active |< true |u ,
     < email |t alice@example.com,
-    < id |n: 12345,
+    < id |n 12345,
     < metadata |
       {
         < created |t 2023-01-15,

@@ -33,6 +33,7 @@ pkgs.mkShell {
     pkgs.haskellPackages.haskell-language-server
     pkgs.rustc
     pkgs.cargo
+    pkgs.python3
 
     # keep this line if you use bash
     pkgs.bashInteractive
