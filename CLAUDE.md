@@ -39,28 +39,53 @@ This is **netencode**, a data serialization format and library implementation. I
 
 ## Development Commands
 
-### Testing (58 tests total)
+### Testing (75 tests total: 73 offline + 2 network)
 
 DON’T `cd` INTO INTO `tests/`!
 
+#### Automated Testing (Nix Build - 73 offline tests)
+
 ```bash
-# Enter test environment
+# Run all offline tests automatically in nix-build (recommended)
+nix-build -A netencode-tests
+
+# Run specific test file
+nix-build -A netencode-tests --arg testFiles '"test_integration.py"'
+
+# Run tests matching a pattern
+nix-build -A netencode-tests --arg pytestArgs '"-k json_to_netencode"'
+
+# Run with verbose output
+nix-build -A netencode-tests --arg pytestArgs '"-v"'
+
+# Combine options: specific file with verbose output
+nix-build -A netencode-tests --arg testFiles '"test_integration.py"' --arg pytestArgs '"-v"'
+```
+
+#### Manual Testing (Network Tests Only)
+
+```bash
+# Enter test environment for network tests
 nix-shell tests/shell.nix --run "<test-command>"
 
-# Run all tests (default: quiet mode with short tracebacks)
+# Run network tests only (requires internet)
+pytest -q --tb=short test_network.py          # 2 network tests
+
+# Run all tests including network tests (requires internet)
 pytest -q --tb=short
 
-# Run specific test files
-pytest -q --tb=short test_integration.py      # 36 integration tests
-pytest -q --tb=short test_readme_examples.py  # 17 README example tests
-pytest -q --tb=short test_netencode_py.py     # 22 Python module tests
-
-# Run with full verbose output (only when errors need investigation)
-pytest -v
-
-# Run specific test
-pytest -q --tb=short test_readme_examples.py::TestReadmeExamples::test_basic_record_field_extraction
+# Run with verbose output for debugging
+pytest -v test_network.py
 ```
+
+#### Test Structure
+
+- **test_integration.py**: 36 CLI tool integration tests (offline)
+- **test_readme_examples.py**: 15 documentation example tests (offline) 
+- **test_netencode_py.py**: 22 Python module unit tests (offline)
+- **test_network.py**: 2 tests requiring network connectivity (GitHub API, nix flake)
+
+The offline tests (73 total) run automatically in nix-build without network access. Network tests are available for manual verification when internet connectivity is available.
 
 ### Build Systems
 
@@ -106,24 +131,12 @@ cabal build exec-helpers       # Utilities
 cargo build
 ```
 
-## Development Environment
-
-### Main Development Shell (`nix-shell` or `nix develop`)
-- GHC with Hoogle documentation
-- Cabal and Haskell Language Server
-- All required dependencies for Haskell, Rust, and Python
-
-### Test Environment (`nix-shell tests/shell.nix`)
-- Python 3.13+ with pytest
-- All netencode tools available via environment variables
-- Proper test isolation and tool path setup
-
 ## Project Structure
 
 - Multi-package Cabal project (`cabal.project`)
 - Haskell IDE configuration in `hie.yaml`
 - Nix helpers in `nix-lib/` for custom build utilities
-- Comprehensive Python test suite in `tests/` (58 tests total)
+- Automated test suite with nix-build integration
 - Cross-language compatibility across Haskell, Rust, and Python
 - Nix flake for reproducible builds and development environments
 
@@ -142,10 +155,8 @@ cargo build
 - Integration with Unix tooling philosophy
 
 ### Python
-- Bytes-based netencode construction for testing
+- Bytes-based netencode construction module
 - Direct binary format generation without intermediate representations
-- Comprehensive test suite covering all CLI tools and edge cases
-- README example verification ensuring documentation accuracy
 
 ## Commit Message Format
 
@@ -174,24 +185,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - Use little bullet points in the extended message and no flowery language
 - When compacting your history, write a file to docs/ that is called `<date>_<timestamp>_claude-compact.md` and contains the compacted history text
 
-## Testing Guidelines
-
-### Test Organization
-- `test_integration.py`: Tool pipelines and cross-tool compatibility (36 tests)
-- `test_readme_examples.py`: Documentation example verification (17 tests)
-- `test_netencode_py.py`: Python module unit tests (22 tests)
-- `netencode_py.py`: Python netencode construction module
-- `conftest.py`: Shared utilities with bytes-based `run_tool()`
-
-### Test Approach
-- Bytes-based approach consistent with netencode being a binary format
-- Use `b'expected'` not `'expected'` in assertions
-- The `run_tool()` function accepts both string and bytes stdin, returns bytes stdout/stderr
-
-### Adding New Tests
-- Integration tests → `test_integration.py`
-- README examples → `test_readme_examples.py`
-- Use existing `netencode_py` module for test data construction
 
 ## Known Issues / Workarounds
 

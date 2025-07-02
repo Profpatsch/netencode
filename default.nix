@@ -432,6 +432,94 @@ let
     }
   '';
 
+  netencode-tests = { testFiles ? "", pytestArgs ? "" }: pkgs.stdenv.mkDerivation {
+    name = "netencode-tests";
+    
+    src = exact-source ./tests [
+      ./tests/test_integration.py
+      ./tests/test_readme_examples.py
+      ./tests/test_netencode_py.py
+      ./tests/test_network.py
+      ./tests/conftest.py
+      ./tests/netencode_py.py
+      ./tests/pytest.ini
+    ];
+    
+    nativeBuildInputs = with pkgs; [
+      (python3.withPackages (ps: with ps; [ pytest ]))
+    ];
+    
+    buildInputs = [
+      # All netencode tools needed for testing
+      pretty
+      netencode-mustache
+      netencode-record-get
+      netencode-to-env
+      env-to-netencode
+      json-to-netencode
+      netencode-filter
+      netencode-plain
+    ];
+    
+    # Set up environment variables for tools (like shell.nix does)
+    shellHook = ''
+      export JSON_TO_NETENCODE="${json-to-netencode}/bin/json-to-netencode"
+      export NETENCODE_FILTER="${netencode-filter}/bin/netencode-filter"
+      export NETENCODE_PLAIN="${netencode-plain}/bin/netencode-plain"
+      export NETENCODE_RECORD_GET="${netencode-record-get}/bin/netencode-record-get"
+      export ENV_TO_NETENCODE="${env-to-netencode}/bin/env-to-netencode"
+      export NETENCODE_TO_ENV="${netencode-to-env}/bin/netencode-to-env"
+      export NETENCODE_PRETTY="${pretty}/bin/netencode-pretty"
+    '';
+    
+    buildPhase = ''
+      # Set up environment variables for tools
+      export JSON_TO_NETENCODE="${json-to-netencode}/bin/json-to-netencode"
+      export NETENCODE_FILTER="${netencode-filter}/bin/netencode-filter"
+      export NETENCODE_PLAIN="${netencode-plain}/bin/netencode-plain"
+      export NETENCODE_RECORD_GET="${netencode-record-get}/bin/netencode-record-get"
+      export ENV_TO_NETENCODE="${env-to-netencode}/bin/env-to-netencode"
+      export NETENCODE_TO_ENV="${netencode-to-env}/bin/netencode-to-env"
+      export NETENCODE_PRETTY="${pretty}/bin/netencode-pretty"
+      
+      # Determine which tests to run
+      if [ -n "${testFiles}" ]; then
+        TEST_FILES="${testFiles}"
+      else
+        TEST_FILES="test_integration.py test_readme_examples.py test_netencode_py.py"
+      fi
+      
+      # Determine pytest arguments
+      if [ -n "${pytestArgs}" ]; then
+        PYTEST_ARGS="${pytestArgs}"
+      else
+        PYTEST_ARGS="-q --tb=short"
+      fi
+      
+      # Run the tests
+      python -m pytest $PYTEST_ARGS $TEST_FILES
+    '';
+    
+    installPhase = ''
+      mkdir -p $out
+      echo "Tests completed successfully" > $out/test-results.txt
+      echo "Test files: ${testFiles}" >> $out/test-results.txt
+      echo "Pytest args: ${pytestArgs}" >> $out/test-results.txt
+    '';
+    
+    meta = {
+      description = "Test suite for netencode tools";
+      longDescription = ''
+        Runs the netencode test suite. By default, excludes network-requiring tests.
+        
+        Usage:
+        - nix-build -A netencode-tests  # Run all offline tests
+        - nix-build -A netencode-tests --arg testFiles '"test_integration.py"'  # Run specific file
+        - nix-build -A netencode-tests --arg pytestArgs '"-k json_to_netencode"'  # Run tests matching pattern
+      '';
+    };
+  };
+
   netencode = pkgs.symlinkJoin {
     name = "netencode";
     paths = [
@@ -464,6 +552,7 @@ in
 {
   inherit
     netencode
+    netencode-tests
     netencode-rs
     netencode-hs
     pretty-rs

@@ -8,13 +8,14 @@ from typing import Optional, List, Union
 
 
 def get_tool_path(tool_name: str) -> str:
-    """Get the full path to a netencode tool from environment variables."""
+    """Get the full path to a netencode tool from environment variables or PATH."""
+    # First try environment variables (for nix-build derivation)
     env_var = tool_name.upper().replace('-', '_')
     path = os.environ.get(env_var)
     if path and os.path.exists(path):
         return path
     
-    # Fallback: try to find in PATH
+    # Fallback: try to find in PATH (for shell.nix)
     try:
         return subprocess.check_output(['which', tool_name], text=True).strip()
     except subprocess.CalledProcessError:

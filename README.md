@@ -119,11 +119,11 @@ curl -s api/users.json | json-to-netencode | netencode-filter active=true | nete
 
 ```bash
 # Convert your environment to structured data
-env-splice-record
+env-to-netencode
 # Output: {200:<4:HOME|t10:/home/user,<4:PATH|t50:/usr/bin:/bin,<4:USER|t4:user,...}
 
 # Use structured data as environment for commands
-echo '{25:<4:name|t5:Alice,<3:age|n:30,}' | record-splice-env echo "Hello $name, you are $age years old"
+echo '{25:<4:name|t5:Alice,<3:age|n:30,}' | netencode-to-env sh -c 'echo "Hello $name, you are $age years old"'
 # Output: Hello Alice, you are 30 years old
 ```
 
@@ -226,6 +226,7 @@ curl -s api/users.json | json-to-netencode | netencode-filter active=true | nete
 ### Available Flake Outputs
 
 - `packages.default` / `packages.netencode`: Complete netencode package with all tools
+- `packages.netencode-tests`: Test suite (configurable with testFiles and pytestArgs)
 - `apps.default` / `apps.netencode-pretty`: Pretty-printer app for quick inspection
 - `devShells.default`: Development environment with all tools in PATH
 
@@ -369,8 +370,8 @@ The netencode ecosystem provides several command-line tools for working with dat
 - **`netencode-pretty`**: Pretty-print netencode for human reading
 
 ### Environment Integration
-- **`env-splice-record`**: Convert environment variables to a netencode record
-- **`record-splice-env <command>`**: Execute command with record fields as environment variables
+- **`env-to-netencode`**: Convert environment variables to a netencode record
+- **`netencode-to-env <command>`**: Execute command with record fields as environment variables
 
 ### Template Processing
 - **`netencode-mustache`**: Mustache template rendering with netencode data
