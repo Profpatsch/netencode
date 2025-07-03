@@ -3,3 +3,4 @@ dist-newstyle/
 __pycache__/
 target/
 /.claude/settings.local.json
+.claude-test

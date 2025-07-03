@@ -69,14 +69,14 @@ nix-build -A netencode-tests --arg testFiles '"test_integration.py"' --arg pytes
 
 ```bash
 # Run custom commands with access to all netencode tools
-nix-build -A netencode-tests --arg customTest ./path/to/test-script.sh
+nix-build -A netencode-tests --arg customTest ./.claude-test
 
-# Example custom test script (./test-script):
+# Example custom test script (./.claude-test):
 echo "Testing specific functionality..."
 echo '"hello"' | json-to-netencode | netencode-pretty
 echo "Custom test completed"
 
-# you can write the test, then call nix-build with the arg, then delete the file again at the very end
+# Use Write tool to create ./.claude-test, then run nix-build with the arg
 
 #### Manual Testing (Network Tests Only)
 
@@ -253,4 +253,4 @@ concrete examples and relegated nix-shell to network tests only.
 # Use instead: cat file.txt | ./tool
 ```
 
-**For Claude Code**: AVOID suggesting any bash commands that contain the `<` character for file redirection. Always use `cat file |` or `printf ... |` patterns instead.
+**For Claude Code**: AVOID suggesting any bash commands that contain the `<` character for file redirection. Always use `cat file |` or `printf ... |` patterns instead. Also, use the Write tool to create `./.claude-test` for temporary testing scripts instead of bash heredocs.
