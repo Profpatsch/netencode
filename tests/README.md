@@ -39,38 +39,40 @@ nix-build -A netencode-tests --arg pytestArgs '"-k manpage"'
 nix-build -A netencode-tests --arg pytestArgs '"-v"'
 ```
 
-### Manual Testing (Development)
+### Development Testing (Adhoc Testing Recommended)
 
-Enter the test environment:
+For development and debugging, use nix-build with custom test scripts:
+
 ```bash
-nix-shell tests/shell.nix
+# Create a custom test script for debugging
+cat > /tmp/debug-test.sh << 'EOF'
+#!/bin/bash
+echo "Debugging specific functionality..."
+echo '{"test": "data"}' | json-to-netencode | netencode-pretty
+echo "Testing record extraction..."
+echo '{29:<4:name|t5:Alice,<3:age|i:30,}' | netencode-record-get name
+EOF
+
+# Run with nix-build (recommended for all development work)
+nix-build -A netencode-tests --arg customTest /tmp/debug-test.sh --no-out-link
+
+# Clean up
+rm /tmp/debug-test.sh
 ```
 
-Then run tests manually:
+### Manual Testing (Network Tests Only)
+
+**Note: Only use nix-shell for network tests that cannot run in nix-build sandbox**
+
 ```bash
-# Run all offline tests
-pytest -m "not network"
+# Enter test environment for network tests only
+nix-shell tests/shell.nix
 
-# Run all tests (including network tests)
-pytest
+# Run network tests (requires internet)
+pytest test_network.py -v
 
-# Run with verbose output
+# Run all tests including network tests (requires internet)
 pytest -v
-
-# Run specific test file
-pytest test_integration.py
-pytest test_readme_examples.py
-pytest test_manpage_examples.py
-pytest test_netencode_py.py
-
-# Run network tests only
-pytest test_network.py
-
-# Run specific test
-pytest test_readme_examples.py::TestReadmeExamples::test_basic_record_field_extraction
-
-# Run tests matching a pattern
-pytest -k "json"
 ```
 
 ## Test Categories
