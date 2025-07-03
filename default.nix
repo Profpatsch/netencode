@@ -10,16 +10,24 @@ let
   arglib = import ./lib-haskell/arglib/netencode.nix { inherit pkgs lib rust-writers exact-source exec-helpers gen netencode-rs netencode-hs; };
   my-prelude = import ./third-party/my-prelude/default.nix { inherit pkgs lib exact-source; };
 
-  netencode-rs = rust-writers.rustSimpleLib
-    {
+  netencode-rs =
+    rust-writers.rustFullLib {
       name = "netencode";
+      libPath = "src/netencode.rs";
+
+      src = exact-source ./lib-rust [
+        ./lib-rust/Cargo.toml
+        ./lib-rust/src/netencode.rs
+        ./lib-rust/tests/simple_generator_test.rs
+      ];
+
       dependencies = [
         rust-crates.nom
         rust-crates.indexmap
         exec-helpers.exec-helpers-rs
       ];
-    }
-    (builtins.readFile ./lib-rust/netencode.rs);
+    };
+
 
   netencode-hs = pkgs.haskellPackages.mkDerivation {
     pname = "netencode";
@@ -206,10 +214,10 @@ let
     '';
     installPhase = ''
       mkdir -p $out/share/man/man1 $out/share/man/man5
-      
+
       # Install section 5 (file formats)
       cp netencode.5 $out/share/man/man5/
-      
+
       # Install section 1 (commands)
       cp netencode-pretty.1 $out/share/man/man1/
       cp netencode-record-get.1 $out/share/man/man1/
@@ -278,7 +286,7 @@ let
         exec_helpers::no_args("json-to-netencode");
         let stdin = std::io::stdin();
         let reader = stdin.lock();
-        
+
         match serde_json::from_reader::<_, serde_json::Value>(reader) {
             Ok(json_value) => {
                 let netencode_value = json_to_netencode(json_value);
@@ -323,7 +331,7 @@ let
         let args = exec_helpers::args("netencode-filter", 1);
         let filter_expr = String::from_utf8(args[0].clone())
             .expect("Filter expression must be valid UTF-8");
-        
+
         let (field, value) = if let Some(eq_pos) = filter_expr.find('=') {
             let field = &filter_expr[..eq_pos];
             let value = &filter_expr[eq_pos + 1..];
@@ -335,14 +343,14 @@ let
         let stdin = io::stdin();
         let reader = BufReader::new(stdin.lock());
         let mut stdout = io::stdout();
-        
+
         for line in reader.lines() {
             match line {
                 Ok(line_str) => {
                     if line_str.trim().is_empty() {
                         continue;
                     }
-                    
+
                     match netencode::parse::t_t(line_str.as_bytes()) {
                         Ok((_, t)) => {
                             match &t {
@@ -387,7 +395,7 @@ let
     fn main() {
         exec_helpers::no_args("netencode-plain");
         let t = netencode::t_from_stdin_or_die_user_error("netencode-plain");
-        
+
         match t.to_u() {
             // Text values - output raw text content
             netencode::U::Text(s) => {
@@ -397,7 +405,7 @@ let
             netencode::U::N(n) => {
                 print!("{}", n);
             },
-            // Signed integers - output as decimal  
+            // Signed integers - output as decimal
             netencode::U::I(i) => {
                 print!("{}", i);
             },
@@ -435,7 +443,7 @@ let
 
   netencode-tests = { testFiles ? "", pytestArgs ? "", customTest ? null }: pkgs.stdenv.mkDerivation {
     name = "netencode-tests";
-    
+
     src = exact-source ./. [
       ./tests/test_integration.py
       ./tests/test_readme_examples.py
@@ -447,16 +455,16 @@ let
       ./tests/pytest.ini
       ./lib-python/netencode.py
     ];
-    
+
     nativeBuildInputs = with pkgs; [
       (python3.withPackages (ps: with ps; [ pytest ]))
     ];
-    
+
     buildInputs = [
       # All netencode tools needed for testing
       netencode
     ];
-    
+
     # Set up environment variables for tools (like shell.nix does)
     shellHook = ''
       export JSON_TO_NETENCODE="${json-to-netencode}/bin/json-to-netencode"
@@ -467,7 +475,7 @@ let
       export NETENCODE_TO_ENV="${netencode-to-env}/bin/netencode-to-env"
       export NETENCODE_PRETTY="${pretty}/bin/netencode-pretty"
     '';
-    
+
     buildPhase = ''
       # Set up environment variables for tools
       export JSON_TO_NETENCODE="${json-to-netencode}/bin/json-to-netencode"
@@ -477,7 +485,7 @@ let
       export ENV_TO_NETENCODE="${env-to-netencode}/bin/env-to-netencode"
       export NETENCODE_TO_ENV="${netencode-to-env}/bin/netencode-to-env"
       export NETENCODE_PRETTY="${pretty}/bin/netencode-pretty"
-      
+
       # Include custom test file & run if provided
       ${if customTest != null
         then ''
@@ -490,37 +498,37 @@ let
 
       # Change to tests directory
       cd tests
-      
+
       # Determine which tests to run
       if [ -n "${testFiles}" ]; then
         TEST_FILES="${testFiles}"
       else
         TEST_FILES="test_integration.py test_readme_examples.py test_netencode_py.py"
       fi
-      
+
       # Determine pytest arguments
       if [ -n "${pytestArgs}" ]; then
         PYTEST_ARGS="${pytestArgs}"
       else
         PYTEST_ARGS="-q --tb=short"
       fi
-      
+
       # Run the tests
       python -m pytest $PYTEST_ARGS $TEST_FILES
     '';
-    
+
     installPhase = ''
       mkdir -p $out
       echo "Tests completed successfully" > $out/test-results.txt
       echo "Test files: ${testFiles}" >> $out/test-results.txt
       echo "Pytest args: ${pytestArgs}" >> $out/test-results.txt
     '';
-    
+
     meta = {
       description = "Test suite for netencode tools";
       longDescription = ''
         Runs the netencode test suite. By default, excludes network-requiring tests.
-        
+
         Usage:
         - nix-build -A netencode-tests  # Run all offline tests
         - nix-build -A netencode-tests --arg testFiles '"test_integration.py"'  # Run specific file
@@ -548,7 +556,7 @@ let
         Netencode is a data serialization format inspired by bencode and netstring.
         It provides type-safe, length-prefixed encoding that is both human-readable
         for debugging and machine-efficient for parsing.
-        
+
         This package includes all CLI tools for working with netencode data:
         processing, filtering, converting, and debugging structured data in Unix pipelines.
       '';
@@ -560,7 +568,7 @@ let
   # Nix generator tests - evaluated directly during nix evaluation
   netencode-nix-tests = import ./lib-nix/test-gen.nix { inherit (pkgs) lib; };
 
-  # Haskell generator tests  
+  # Haskell generator tests
   netencode-haskell-tests = pkgs.haskellPackages.mkDerivation {
     pname = "netencode-haskell-tests";
     version = "0.1.0";
@@ -598,42 +606,52 @@ let
   };
 
   # Rust generator tests
-  netencode-rust-tests = pkgs.stdenv.mkDerivation {
-    name = "netencode-rust-tests";
-    src = exact-source ./. [
-      ./lib-rust/Cargo.toml
-      ./lib-rust/netencode.rs
-      ./lib-rust/tests/generator_spec.rs
-    ];
-    
-    nativeBuildInputs = [ pkgs.rustc pkgs.cargo ];
-    buildInputs = [];
-    
-    buildPhase = ''
-      cd lib-rust
-      cargo test
-    '';
-    
-    installPhase = ''
-      mkdir -p $out
-      echo "Rust generator tests passed" > $out/test-results.txt
-    '';
-    
-    meta = {
-      description = "Test suite for netencode Rust generators";
-    };
-  };
+  netencode-rust-tests = rust-writers.rustSimple
+    {
+      name = "netencode-rust-tests";
+      dependencies = [
+        netencode-rs
+        rust-crates.indexmap
+      ];
+    } ''
+    extern crate netencode;
+    extern crate indexmap;
+    use netencode::T;
+
+    #[test]
+    fn test_record_alphabetical_sort() {
+        let record = T::record(vec![("b", T::text("2")), ("a", T::text("1"))]);
+        let encoded = record.encode();
+        let expected = b"{20:<1:a|t1:1,<1:b|t1:2,}"; // Correct alphabetical order
+        assert_eq!(encoded, expected);
+    }
+
+    #[test]
+    fn test_basic_generators() {
+        assert_eq!(T::unit().encode(), b"u,");
+        assert_eq!(T::natural(42).encode(), b"n:42,");
+        assert_eq!(T::integer(-42).encode(), b"i:-42,");
+        assert_eq!(T::boolean(true).encode(), b"<4:true|u,");
+        assert_eq!(T::boolean(false).encode(), b"<5:false|u,");
+        assert_eq!(T::text("hello").encode(), b"t5:hello,");
+        assert_eq!(T::binary(b"data").encode(), b"b4:data,");
+    }
+
+    fn main() {
+        // This is a test binary - tests run automatically
+    }
+  '';
 
   # Combined test suite for all language generators
   test-all-generators = pkgs.stdenv.mkDerivation {
     name = "test-all-generators";
-    
+
     buildInputs = [
       netencode-python-tests  # Python generator tests
-      netencode-haskell-tests  
+      netencode-haskell-tests
       netencode-rust-tests
     ];
-    
+
     buildPhase = ''
       echo "Running cross-language generator tests..."
       echo "Python tests: ${netencode-python-tests}"
@@ -642,7 +660,7 @@ let
       echo "Rust tests: ${netencode-rust-tests}"
       echo "All generator tests completed successfully!"
     '';
-    
+
     installPhase = ''
       mkdir -p $out
       echo "All language generator tests passed" > $out/test-results.txt
@@ -652,7 +670,7 @@ let
       echo "- Haskell: ${netencode-haskell-tests}" >> $out/test-results.txt
       echo "- Rust: ${netencode-rust-tests}" >> $out/test-results.txt
     '';
-    
+
     meta = {
       description = "Cross-language generator test suite for netencode";
       longDescription = ''
@@ -663,27 +681,27 @@ let
     };
   };
 
-  # Python generator tests  
+  # Python generator tests
   netencode-python-tests = pkgs.stdenv.mkDerivation {
     name = "netencode-python-tests";
     src = exact-source ./. [
       ./lib-python/netencode.py
       ./lib-python/test_generator_spec.py
     ];
-    
+
     nativeBuildInputs = with pkgs; [ (python3.withPackages (ps: with ps; [ pytest ])) ];
     buildInputs = [];
-    
+
     buildPhase = ''
       cd lib-python
       python -m pytest test_generator_spec.py
     '';
-    
+
     installPhase = ''
       mkdir -p $out
       echo "Python generator tests passed" > $out/test-results.txt
     '';
-    
+
     meta = {
       description = "Test suite for netencode Python generators";
     };

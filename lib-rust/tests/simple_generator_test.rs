@@ -1,153 +1,5 @@
-// Simplified test that directly includes the needed parts of netencode
-// without the exec_helpers dependency
 
-use indexmap::IndexMap;
-use std::fmt::{Debug, Display};
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum T {
-    // Unit
-    Unit,
-    // Naturals (64-bit)
-    N(u64),
-    // Integers (64-bit)
-    I(i64),
-    // Text
-    Text(String),
-    // Binary
-    Binary(Vec<u8>),
-    // Tags
-    Sum(Tag<String, T>),
-    // Records
-    Record(IndexMap<String, T>),
-    // Lists
-    List(Vec<T>),
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Tag<S, A> {
-    pub tag: S,
-    pub val: Box<A>,
-}
-
-impl T {
-    /// Create a unit value
-    pub fn unit() -> T {
-        T::Unit
-    }
-
-    /// Create a natural number (unsigned 64-bit)
-    pub fn natural(n: u64) -> T {
-        T::N(n)
-    }
-
-    /// Create a signed integer (64-bit)
-    pub fn integer(n: i64) -> T {
-        T::I(n)
-    }
-
-    /// Create a boolean value as a tagged unit
-    pub fn boolean(b: bool) -> T {
-        if b {
-            T::tag("true", T::unit())
-        } else {
-            T::tag("false", T::unit())
-        }
-    }
-
-    /// Create a text string (UTF-8)
-    pub fn text<S: Into<String>>(s: S) -> T {
-        T::Text(s.into())
-    }
-
-    /// Create binary data
-    pub fn binary<B: Into<Vec<u8>>>(data: B) -> T {
-        T::Binary(data.into())
-    }
-
-    /// Create a tagged value
-    pub fn tag<S: Into<String>>(name: S, value: T) -> T {
-        T::Sum(Tag {
-            tag: name.into(),
-            val: Box::new(value),
-        })
-    }
-
-    /// Create a record from key-value pairs
-    pub fn record<K, I>(fields: I) -> T 
-    where
-        K: Into<String>,
-        I: IntoIterator<Item = (K, T)>,
-    {
-        let mut map = IndexMap::new();
-        for (k, v) in fields {
-            map.insert(k.into(), v);
-        }
-        // Sort keys alphabetically for consistent output
-        map.sort_by(|k1, _, k2, _| k1.cmp(k2));
-        T::Record(map)
-    }
-
-    /// Create a list from values
-    pub fn list<I: IntoIterator<Item = T>>(items: I) -> T {
-        T::List(items.into_iter().collect())
-    }
-
-    /// Encode to netencode format
-    pub fn encode(&self) -> Vec<u8> {
-        match self {
-            T::Unit => b"u,".to_vec(),
-            T::N(n) => format!("n:{},", n).into_bytes(),
-            T::I(i) => format!("i:{},", i).into_bytes(),
-            T::Text(t) => {
-                let bytes = t.as_bytes();
-                let mut result = format!("t{}:", bytes.len()).into_bytes();
-                result.extend(bytes);
-                result.push(b',');
-                result
-            }
-            T::Binary(data) => {
-                let mut result = format!("b{}:", data.len()).into_bytes();
-                result.extend(data);
-                result.push(b',');
-                result
-            }
-            T::Sum(Tag { tag, val }) => {
-                let tag_bytes = tag.as_bytes();
-                let val_encoded = val.encode();
-                let mut result = format!("<{}:", tag_bytes.len()).into_bytes();
-                result.extend(tag_bytes);
-                result.push(b'|');
-                result.extend(val_encoded);
-                result
-            }
-            T::Record(map) => {
-                let mut content = Vec::new();
-                for (k, v) in map {
-                    let key_bytes = k.as_bytes();
-                    let val_encoded = v.encode();
-                    content.extend(format!("<{}:", key_bytes.len()).into_bytes());
-                    content.extend(key_bytes);
-                    content.push(b'|');
-                    content.extend(val_encoded);
-                }
-                let mut result = format!("{{{}:", content.len()).into_bytes();
-                result.extend(content);
-                result.push(b'}');
-                result
-            }
-            T::List(items) => {
-                let content: Vec<u8> = items.iter().flat_map(|item| item.encode()).collect();
-                let mut result = format!("[{}:", content.len()).into_bytes();
-                result.extend(content);
-                result.push(b']');
-                result
-            }
-        }
-    }
-}
-
-// Tests (same as before but using our simplified implementation)
+use netencode::T;
 
 // Basic Types Tests
 #[test]
@@ -291,6 +143,7 @@ fn test_record_two_fields() {
 #[test]
 fn test_record_alphabetical_sort() {
     let record = T::record(vec![("b", T::text("2")), ("a", T::text("1"))]);
+    // Fixed: expecting correct alphabetical order
     assert_eq!(record.encode(), b"{20:<1:a|t1:1,<1:b|t1:2,}");
 }
 
@@ -360,7 +213,7 @@ fn test_deeply_nested_structures() {
     let inner_record = T::record(vec![("value", T::text("deep"))]);
     let middle_list = T::list(vec![inner_record]);
     let outer_record = T::record(vec![("nested", middle_list)]);
-    
+
     let expected = b"{37:<6:nested|[22:{17:<5:value|t4:deep,}]}";
     assert_eq!(outer_record.encode(), expected);
 }
@@ -374,7 +227,7 @@ fn test_natural_values_are_inherently_non_negative() {
 
 #[test]
 fn test_natural_values_are_inherently_bounded_to_64_bit() {
-    // u64 type prevents overflow at compile time  
+    // u64 type prevents overflow at compile time
     assert_eq!(T::natural(u64::MAX).encode(), b"n:18446744073709551615,");
 }
 

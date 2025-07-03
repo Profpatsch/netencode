@@ -56,6 +56,20 @@ let
         '';
       }));
 
+  rustFullLib = args@{ name, src, doCheck ? true, libPath ? "src/lib.rs",  dependencies ? [ ] }:
+    (if doCheck then testRustSimple else pkgs.lib.id)
+      (pkgs.buildRustCrate {
+        pname = name;
+        version = "1.0.0";
+        crateName = name;
+        edition = "2021";
+        buildTests = true;
+
+        inherit src;
+        inherit libPath;
+        inherit dependencies;
+      });
+
   /* Takes a `buildRustCrate` derivation as an input,
     * builds it with `{ buildTests = true; }` and runs
     * all tests found in its `tests` dir. If they are
@@ -72,9 +86,10 @@ let
       tests = pkgs.runCommandLocal "${rustDrv.name}-tests-run" { }
         ''
           set -euo pipefail
-          for test in $(find "${crate true}/tests" -type f -name "*.rs"); do
+          ls ${crate true}/tests
+          for test in $(find "${crate true}/tests" -type f -executable); do
             echo "Running test $test"
-            ${crate true}/tests/$test
+            $test
           done
           touch "$out"
         '';
@@ -87,5 +102,6 @@ in
     rustSimple
     rustSimpleBin
     rustSimpleLib
+    rustFullLib
     ;
 }

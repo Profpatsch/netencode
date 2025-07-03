@@ -6,6 +6,7 @@ use indexmap::IndexMap;
 use std::fmt::{Debug, Display};
 use std::io::{Read, Write};
 
+
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum T {
     // Unit
@@ -72,14 +73,16 @@ impl T {
     }
 
     /// Create a record from key-value pairs
-    pub fn record<K, I>(fields: I) -> T 
+    pub fn record<K, I>(fields: I) -> T
     where
         K: Into<String>,
         I: IntoIterator<Item = (K, T)>,
     {
-        let map = fields.into_iter()
+        let mut map = fields.into_iter()
             .map(|(k, v)| (k.into(), v))
             .collect::<IndexMap<String, T>>();
+        // Sort keys alphabetically for consistent output
+        map.sort_by(|k1, _, k2, _| k1.cmp(k2));
         T::Record(map)
     }
 
@@ -234,7 +237,7 @@ pub fn t_from_stdin_or_die_user_error<'a>(prog_name: &'_ str) -> T {
                 .cloned()
                 .filter(|&b| b != b'\n')
                 .collect();
-            
+
             if trimmed_rest.is_empty() {
                 t
             } else {
@@ -810,7 +813,7 @@ pub mod parse {
 pub mod dec {
     use super::*;
     use indexmap::IndexMap;
-    
+
     pub struct DecodeError(pub String);
 
     pub trait Decoder<'a> {

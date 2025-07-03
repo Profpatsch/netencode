@@ -3,9 +3,17 @@ name = "netencode"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+path = "src/netencode.rs"
+
 [dependencies]
 nom = "7.0"
 indexmap = "1.9"
+exec_helpers = { path = "exec-helpers" }
 
 [dev-dependencies]
 serde_json = "1.0"
+
+[[test]]
+name = "simple_generator_test"
+path = "tests/simple_generator_test.rs"
