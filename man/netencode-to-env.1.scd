@@ -56,7 +56,7 @@ The exit status is that of the executed command.
 Execute a command with user data:
 
 ```
-echo '{33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}' | 
+echo '{49:<6:active|<4:true|u,<3:age|i:30,<4:name|t5:Alice,}' | 
   netencode-to-env echo "Hello $name, you are $age years old"
 # Output: Hello Alice, you are 30 years old
 ```
@@ -64,14 +64,14 @@ echo '{33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}' |
 Run a script with database credentials:
 
 ```
-echo '{45:<4:host|t9:localhost,<4:port|n:5432,<8:database|t6:myapp,}' |
+echo '{45:<4:host|t9:localhost,<4:port|i:5432,<8:database|t6:myapp,}' |
   netencode-to-env psql -h "$host" -p "$port" -d "$database"
 ```
 
 Generate configuration files:
 
 ```
-echo '{30:<6:server|t7:example,<4:port|n:8080,}' |
+echo '{30:<6:server|t7:example,<4:port|i:8080,}' |
   netencode-to-env envsubst < config.template > config.conf
 ```
 

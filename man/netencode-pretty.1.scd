@@ -46,7 +46,7 @@ The tool outputs human-readable formatted text (not valid netencode) with:
 Format a compact netencode record:
 
 ```
-echo '{33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}' | netencode-pretty
+echo '{49:<6:active|<4:true|u,<3:age|i:30,<4:name|t5:Alice,}' | netencode-pretty
 ```
 
 Format nested structures:

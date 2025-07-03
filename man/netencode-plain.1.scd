@@ -74,9 +74,9 @@ echo 't5:hello,' | netencode-plain
 Convert numbers:
 
 ```
-echo 'n:42,' | netencode-plain
+echo 'i:42,' | netencode-plain
 # Output: 42
-echo 'i:-100,' | netencode-plain  
+echo 'i:-100,' | netencode-plain
 # Output: -100
 ```
 
@@ -92,7 +92,7 @@ echo '<5:false|u,' | netencode-plain
 Use in pipelines to extract field values:
 
 ```
-echo '{33:<4:name|t5:Alice,<3:age|n:30,}' | netencode-record-get name | netencode-plain
+echo '{29:<3:age|i:30,<4:name|t5:Alice,}' | netencode-record-get name | netencode-plain
 # Output: Alice
 ```
 

@@ -45,21 +45,21 @@ field does not exist in the record, the program exits with an error.
 Extract the name field from a user record:
 
 ```
-echo '{33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}' | netencode-record-get name
+echo '{49:<6:active|<4:true|u,<3:age|i:30,<4:name|t5:Alice,}' | netencode-record-get name
 # Output: t5:Alice,
 ```
 
 Extract a numeric field:
 
 ```
-echo '{33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}' | netencode-record-get age  
-# Output: n:30,
+echo '{49:<6:active|<4:true|u,<3:age|i:30,<4:name|t5:Alice,}' | netencode-record-get age  
+# Output: i:30,
 ```
 
 Chain with netencode-plain to get raw values:
 
 ```
-echo '{33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}' | netencode-record-get name | netencode-plain
+echo '{49:<6:active|<4:true|u,<3:age|i:30,<4:name|t5:Alice,}' | netencode-record-get name | netencode-plain
 # Output: Alice
 ```
 

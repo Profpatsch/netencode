@@ -9,13 +9,13 @@ netencode - Length-prefixed, type-safe data serialization format
 A netencode record containing user information:
 
 ```
-{33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}
+{49:<6:active|<4:true|u,<3:age|i:30,<4:name|t5:Alice,}
 ```
 
 A netencode list of text values:
 
 ```
-[21:t5:hello,t5:world,t3:foo,]
+[23:t5:hello,t5:world,i:42,]
 ```
 
 Binary data with length prefix:
@@ -70,6 +70,7 @@ Example: n:42,
 Signed integers: i:[value],
 Range: -9223372036854775808 to 9223372036854775807
 Example: i:-42,
+Note: JSON numbers are converted to signed integers
 ```
 
 ## Booleans
@@ -183,10 +184,10 @@ b3:abc,
 
 ```
 # User record
-{33:<4:name|t5:Alice,<3:age|n:30,<6:active|<4:true|u,}
+{49:<6:active|<4:true|u,<3:age|i:30,<4:name|t5:Alice,}
 
 # List of names
-[21:t5:Alice,t3:Bob,t7:Charlie,]
+[23:t5:Alice,t3:Bob,t7:Charlie,]
 
 # Optional value (Some)
 <4:Some|t5:value,

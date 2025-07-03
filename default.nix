@@ -447,6 +447,7 @@ let
     src = exact-source ./. [
       ./tests/test_integration.py
       ./tests/test_readme_examples.py
+      ./tests/test_manpage_examples.py
       ./tests/test_netencode_py.py
       ./tests/test_network.py
       ./tests/GENERATOR_TEST_SPEC.md
@@ -485,6 +486,7 @@ let
       export ENV_TO_NETENCODE="${env-to-netencode}/bin/env-to-netencode"
       export NETENCODE_TO_ENV="${netencode-to-env}/bin/netencode-to-env"
       export NETENCODE_PRETTY="${pretty}/bin/netencode-pretty"
+      export NETENCODE_MUSTACHE="${netencode-mustache}/bin/netencode_mustache"
 
       # Include custom test file & run if provided
       ${if customTest != null
@@ -503,7 +505,7 @@ let
       if [ -n "${testFiles}" ]; then
         TEST_FILES="${testFiles}"
       else
-        TEST_FILES="test_integration.py test_readme_examples.py test_netencode_py.py"
+        TEST_FILES="test_integration.py test_readme_examples.py test_manpage_examples.py test_netencode_py.py"
       fi
 
       # Determine pytest arguments
