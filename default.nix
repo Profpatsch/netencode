@@ -452,7 +452,6 @@ let
       ./tests/test_network.py
       ./tests/GENERATOR_TEST_SPEC.md
       ./tests/conftest.py
-      ./tests/netencode_py.py
       ./tests/pytest.ini
       ./lib-python/netencode.py
     ];
