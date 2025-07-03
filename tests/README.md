@@ -8,10 +8,13 @@ The test suite is written in Python using pytest and split into offline and netw
 
 - **`test_integration.py`** - Core integration tests for all netencode tools (36 tests)
 - **`test_readme_examples.py`** - Tests that verify README examples work correctly (15 tests, offline)
+- **`test_manpage_examples.py`** - Tests that verify man page examples work correctly (37 tests, offline)
 - **`test_netencode_py.py`** - Python module unit tests (22 tests)
+- **`test_pretty_printer.py`** - Comprehensive pretty-printer formatting tests (not integrated into nix build)
 - **`test_network.py`** - Network-requiring tests (2 tests, GitHub API and nix flake)
 - **`conftest.py`** - Shared utilities and fixtures
 - **`pytest.ini`** - Pytest configuration with network markers
+- **`GENERATOR_TEST_SPEC.md`** - Cross-language implementation test specification
 
 Note: The Python netencode module is now located at `lib-python/netencode.py` and uses standardized API function names.
 
@@ -21,13 +24,16 @@ Note: The Python netencode module is now located at `lib-python/netencode.py` an
 
 ```bash
 # Run all offline tests automatically (no network required)
+# Runs 110 tests: 36 integration + 15 readme + 37 manpage + 22 python (offline)
 nix-build -A netencode-tests
 
 # Run specific test file
 nix-build -A netencode-tests --arg testFiles '"test_integration.py"'
+nix-build -A netencode-tests --arg testFiles '"test_manpage_examples.py"'
 
 # Run tests matching a pattern
 nix-build -A netencode-tests --arg pytestArgs '"-k json"'
+nix-build -A netencode-tests --arg pytestArgs '"-k manpage"'
 
 # Run with verbose output
 nix-build -A netencode-tests --arg pytestArgs '"-v"'
@@ -54,6 +60,7 @@ pytest -v
 # Run specific test file
 pytest test_integration.py
 pytest test_readme_examples.py
+pytest test_manpage_examples.py
 pytest test_netencode_py.py
 
 # Run network tests only
@@ -113,6 +120,33 @@ Tests for every example mentioned in the README to ensure documentation accuracy
 - Boolean representation as tagged units
 - GitHub API processing (simplified, no network)
 
+### Man Page Examples (`test_manpage_examples.py`) - 37 tests (offline)
+
+Tests for every example mentioned in the man pages to ensure documentation accuracy:
+
+**Format Specification (`netencode.5`)**:
+- Complete record examples with proper length prefixes
+- Boolean representation as tagged units
+- Number format validation (integers vs naturals)
+
+**Tool-Specific Examples**:
+- **`netencode-pretty.1`**: Pretty-printer output formatting
+- **`netencode-plain.1`**: Scalar value extraction as plain text
+- **`netencode-record-get.1`**: Record field extraction with complex data
+- **`netencode-to-env.1`**: Environment variable conversion and command execution
+- **`netencode-filter.1`**: Data filtering by field values (has known bug - outputs nothing)
+- **`netencode-mustache.1`**: Template rendering with records and lists
+- **`json-to-netencode.1`**: JSON conversion with complex nested structures
+- **`env-to-netencode.1`**: Environment capture and record creation
+
+**Key Features Tested**:
+- Exact netencode format compliance with actual tool output
+- Cross-tool data compatibility and pipeline integration
+- Documentation examples match real tool behavior
+- Complex nested structures (records in lists, lists in records)
+- Unicode handling in field names and values
+- Template processing with mustache integration
+
 ### Python Module Tests (`test_netencode_py.py`) - 22 tests
 
 Unit tests for the Python netencode construction module using the standardized API:
@@ -130,6 +164,43 @@ Tests requiring internet connectivity (separated for nix-build):
 
 - GitHub API data processing with real network calls
 - Nix flake app examples that may need to build from scratch
+
+### Pretty Printer Tests (`test_pretty_printer.py`) - Comprehensive formatting validation
+
+Standalone comprehensive tests for the netencode pretty-printer (not integrated into nix build):
+
+**Scalar Type Formatting**:
+- Unit, natural numbers, signed integers, booleans
+- Large number handling and edge cases
+- Text formatting with length indicators and truncation
+- Binary data detection and hexdump formatting
+
+**Text Processing**:
+- Short text (no truncation)
+- Medium text at 40-character threshold
+- Long text truncation with length indicators
+- Unicode support (multi-byte characters, emojis)
+- Special characters (quotes, newlines, control chars)
+
+**Binary Data Handling**:
+- Small binary (single-line hex)
+- Large binary (multi-line hexdump with ASCII column)
+- UTF-8 vs non-UTF-8 detection
+- Hexdump formatting with offset columns
+
+**Complex Structure Formatting**:
+- Tagged values and nested tags
+- Record formatting with proper indentation
+- List formatting and structure
+- Mixed content types
+- Deep nesting scenarios
+- Realistic data structures
+
+**Output Format Verification**:
+- Exact formatting compliance
+- Indentation consistency (2-4 spaces per level)
+- Line breaking behavior
+- Complete format validation with precise assertions
 
 ## Test Infrastructure
 
@@ -161,22 +232,6 @@ The `tests/shell.nix` provides a lightweight development environment:
 4. **Reliable Subprocess Handling**: Python's subprocess module handles stdin/stdout correctly
 5. **Organized Structure**: Logical grouping into test classes with shared utilities
 
-### Python Netencode Module
-
-The `lib-python/netencode.py` module provides utilities for constructing test data using the standardized API:
-
-- `ne.unit()` → `b"u,"`
-- `ne.text("hello")` → `b"t5:hello,"`
-- `ne.natural(42)` → `b"n:42,"`
-- `ne.integer(-10)` → `b"i:-10,"`
-- `ne.boolean(True)` → `b"<4:true|u,"`
-- `ne.binary(b"data")` → `b"b4:data,"`
-- `ne.tag("status", ne.text("ok"))` → `b"<6:status|t2:ok,"`
-- `ne.record([("name", ne.text("Alice"))])` → complete record
-- `ne.list([ne.text("a"), ne.text("b")])` → complete list
-- `ne.simple_record(name=ne.text("Alice"))` → record with sorted fields
-- `ne.record_ordered()` → record with explicit field ordering
-
 ### Tool Discovery
 
 Tests work in both environments:
@@ -190,8 +245,22 @@ When adding new functionality:
 
 1. **Integration tests** → `test_integration.py` (for tool behavior)
 2. **README examples** → `test_readme_examples.py` (for documentation accuracy)
-3. **Python utilities** → `test_netencode_py.py` (for netencode construction)
-4. **Network tests** → `test_network.py` (if requires internet)
-5. Use the `run_tool()` helper function for consistent tool execution
-6. Follow existing test structure and naming conventions
-7. Test with `nix-build -A netencode-tests` before submitting
+3. **Man page examples** → `test_manpage_examples.py` (for documentation validation)
+4. **Python utilities** → `test_netencode_py.py` (for netencode construction)
+5. **Network tests** → `test_network.py` (if requires internet)
+6. **Cross-language tests** → Reference `GENERATOR_TEST_SPEC.md` for consistent implementation across languages
+7. Use the `run_tool()` helper function for consistent tool execution
+8. Follow existing test structure and naming conventions
+9. Test with `nix-build -A netencode-tests` before submitting
+
+### Generator Test Specification
+
+The `GENERATOR_TEST_SPEC.md` file defines a comprehensive test suite that all netencode language implementations (Haskell, Rust, Python, Nix) must pass. It includes:
+
+- **309 test cases** covering basic types, composite types, complex scenarios, and error cases
+- **Unified API validation** ensuring consistent function names across languages
+- **Binary format compliance** with exact expected outputs for each test case
+- **Edge case coverage** including Unicode, large numbers, and deeply nested structures
+- **Error handling specifications** for invalid inputs and boundary conditions
+
+This specification ensures that all language implementations produce identical netencode output for the same logical data, maintaining cross-language compatibility.
