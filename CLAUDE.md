@@ -197,8 +197,8 @@ Example:
 ```
 doc(meta): ✨ add CLAUDE.md for AI assistant guidance
 
-Analyzed codebase structure, build systems (Nix/Cabal/Cargo), and architecture
-to create comprehensive guidance file for Claude Code.
+Analyzed codebase structure, build systems (Nix/Cabal/Cargo), and 
+architecture to create comprehensive guidance file for Claude Code.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
@@ -208,8 +208,36 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ### Commit Guidelines
 - Wrap commit line lengths at around 70 characters
 - For commit messages, make the first line less than 70 characters long
-- Use little bullet points in the extended message and no flowery language
+- Use explanatory paragraph text, not bullet point lists
+- Use language that is easy to understand, avoid flowery descriptions
+- **Always explain WHY changes were made, not just what was changed**
+- Include reasoning, motivation, or problem being solved
 - When compacting your history, write a file to docs/ that is called `<date>_<timestamp>_claude-compact.md` and contains the compacted history text
+
+### Good vs Bad Commit Body Examples
+
+**Good (explains WHY with reasoning):**
+```
+Restructured test documentation to guide developers toward nix-build
+custom scripts rather than nix-shell for development work. This change
+reduces confusion about tool choice and aligns with the preferred
+isolated testing approach that avoids environment inconsistencies.
+```
+
+**Bad (only lists WHAT was done):**
+```
+- Reframe 'Manual Testing' as 'Development Testing'
+- Add clear example of nix-build custom test script workflow
+- Relegate nix-shell to 'Network Tests Only' with warning note
+- Remove general pytest commands that encouraged nix-shell usage
+```
+
+**Also Bad (no reasoning WHY):**
+```
+Restructured test documentation to guide developers toward nix-build
+custom scripts rather than nix-shell for development work. Added
+concrete examples and relegated nix-shell to network tests only.
+```
 
 
 ## Known Issues / Workarounds
