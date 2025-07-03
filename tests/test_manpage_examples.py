@@ -352,9 +352,9 @@ class TestNetencodeFilter:
     
     def test_filter_by_boolean_field(self):
         """Test filtering by boolean field."""
-        # Create test data with active and inactive users
+        # Create test data with active and inactive users (using correct netencode format)
         active_user = '{49:<6:active|<4:true|u,<3:age|i:30,<4:name|t5:Alice,}'
-        inactive_user = '{51:<6:active|<5:false|u,<3:age|i:25,<4:name|t3:Bob,}'
+        inactive_user = '{48:<6:active|<5:false|u,<3:age|i:25,<4:name|t3:Bob,}'
         input_data = active_user + '\n' + inactive_user
         
         result = run_tool('netencode-filter', 'active=true', stdin=input_data)
@@ -364,46 +364,45 @@ class TestNetencodeFilter:
     
     def test_filter_by_numeric_field(self):
         """Test filtering by numeric field."""
-        # Create test data with different prices
-        product1 = '{24:<4:name|t3:foo,<5:price|i:100,}'
-        product2 = '{24:<4:name|t3:bar,<5:price|i:200,}'
+        # Create test data with different prices (using correct netencode format)
+        product1 = '{30:<4:name|t3:foo,<5:price|i:100,}'
+        product2 = '{30:<4:name|t3:bar,<5:price|i:200,}'
         input_data = product1 + '\n' + product2
         
         result = run_tool('netencode-filter', 'price=100', stdin=input_data)
         assert result.returncode == 0
-        # The filter tool appears to have a bug - it returns success but outputs nothing
-        # This is a known issue with the current implementation
-        # For now, we just verify it doesn't crash
-        # TODO: Fix netencode-filter tool to actually output matching records
+        assert b'foo' in result.stdout
+        assert b'bar' not in result.stdout
     
     def test_filter_by_text_field(self):
         """Test filtering by text field."""
-        # Create test data with different levels
-        error_log = '{26:<5:level|t5:error,<4:text|t3:bad,}'
-        info_log = '{24:<5:level|t4:info,<4:text|t4:good,}'
+        # Create test data with different levels (using correct netencode format)
+        error_log = '{33:<5:level|t5:error,<4:text|t3:bad,}'
+        info_log = '{33:<5:level|t4:info,<4:text|t4:good,}'
         input_data = error_log + '\n' + info_log
         
         result = run_tool('netencode-filter', 'level=error', stdin=input_data)
         assert result.returncode == 0
-        # The filter tool appears to have a bug - it returns success but outputs nothing
-        # This is a known issue with the current implementation
-        # For now, we just verify it doesn't crash
-        # TODO: Fix netencode-filter tool to actually output matching records
+        assert b'error' in result.stdout
+        assert b'info' not in result.stdout
     
     def test_filter_pipeline_chain(self):
         """Test chaining filter with other tools."""
-        # Create test data
-        published = '{34:<6:status|t9:published,<5:title|t3:foo,}'
-        draft = '{28:<6:status|t5:draft,<5:title|t3:bar,}'
+        # Create test data (using correct netencode format)
+        published = '{39:<6:status|t9:published,<5:title|t3:foo,}'
+        draft = '{35:<6:status|t5:draft,<5:title|t3:bar,}'
         input_data = published + '\n' + draft
         
         # Filter and extract title
         filter_result = run_tool('netencode-filter', 'status=published', stdin=input_data)
         assert filter_result.returncode == 0
-        # The filter tool has a bug where it outputs nothing
-        # For now, skip the rest of this test
-        # TODO: Fix netencode-filter tool
-        pytest.skip("Filter tool outputs nothing - known bug")
+        assert b'published' in filter_result.stdout
+        assert b'draft' not in filter_result.stdout
+        
+        # Test chaining with record-get
+        title_result = run_tool('netencode-record-get', 'title', stdin=filter_result.stdout)
+        assert title_result.returncode == 0
+        assert b'foo' in title_result.stdout
 
 
 class TestNetencodeMustache:
