@@ -20,10 +20,10 @@ and scripts in a type-safe way.
 
 # OPTIONS
 
-*command*
+_command_
 	The command to execute
 
-*arguments*
+_arguments_
 	Optional arguments to pass to the command
 
 # INPUT
@@ -91,9 +91,8 @@ The tool will exit with an error if:
 
 # NOTES
 
-Non-UTF-8 field names and values are ignored for safety. Environment variable 
-names must be valid shell identifiers.
+Non-UTF-8 field names and values are skipped and not set as environment variables for safety. Environment variable names must be valid shell identifiers.
 
 # SEE ALSO
 
-*netencode*(5), *netencode-record-get*(1), *env-to-netencode*(1), *json-to-netencode*(1)
+*netencode*(5), *netencode-record-get*(1), *env-to-netencode*(1), *json-to-netencode*(1), *netencode-filter*(1), *netencode-mustache*(1)

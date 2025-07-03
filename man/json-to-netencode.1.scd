@@ -83,7 +83,7 @@ echo '["hello", "world", 42]' | json-to-netencode
 Process API response:
 
 ```
-curl -s https://api.example.com/users | json-to-netencode | record-get name
+curl -s https://api.example.com/users | json-to-netencode | netencode-record-get name
 ```
 
 Convert and format for debugging:
@@ -107,4 +107,4 @@ curl -s api/users.json | json-to-netencode | netencode-filter active=true
 
 # SEE ALSO
 
-*netencode*(5), *netencode-pretty*(1), *record-get*(1), *netencode-filter*(1)
+*netencode*(5), *netencode-pretty*(1), *netencode-record-get*(1), *netencode-filter*(1), *netencode-plain*(1), *netencode-mustache*(1), *env-to-netencode*(1)

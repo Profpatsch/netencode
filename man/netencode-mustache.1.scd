@@ -62,10 +62,10 @@ Netencode values are converted to Mustache data types:
 	Become Mustache arrays
 
 *Tagged values*
-	Currently not supported (will cause error)
+	Booleans are supported: *<4:true|u,* and *<5:false|u,* become Mustache booleans. Other tagged values are not supported and will cause the program to panic.
 
 *Binary data*
-	Currently not supported (will cause error)
+	Not supported (will cause the program to panic)
 
 # EXIT STATUS
 
@@ -95,7 +95,7 @@ cat config.template | netencode-mustache > config.conf
 Use with record data:
 
 ```
-env-splice-record | record-get DATABASE_CONFIG | \
+env-to-netencode | netencode-record-get DATABASE_CONFIG | \
   env TEMPLATE_DATA="$(cat)" netencode-mustache < db.conf.template
 ```
 
@@ -127,12 +127,13 @@ json-to-netencode < data.json | \
 # NOTES
 
 - The *TEMPLATE_DATA* environment variable must contain valid netencode
-- Complex netencode structures (tagged values, binary data) are not supported
+- Boolean tagged values (*<4:true|u,* and *<5:false|u,*) are supported and recommended
+- Other tagged values and binary data are not supported and will cause panic
 - Template syntax errors will cause the program to exit with error
 - Use *env* command to set *TEMPLATE_DATA* in pipelines
 
 # SEE ALSO
 
-*netencode*(5), *env-splice-record*(1), *record-get*(1), *json-to-netencode*(1)
+*netencode*(5), *env-to-netencode*(1), *netencode-record-get*(1), *json-to-netencode*(1), *netencode-filter*(1), *netencode-plain*(1), *netencode-pretty*(1)
 
 Mustache specification: https://mustache.github.io/

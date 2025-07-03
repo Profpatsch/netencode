@@ -92,4 +92,4 @@ env-to-netencode > environment.netencode
 
 # SEE ALSO
 
-*netencode*(5), *netencode-to-env*(1), *netencode-record-get*(1), *netencode-pretty*(1)
+*netencode*(5), *netencode-to-env*(1), *netencode-record-get*(1), *netencode-pretty*(1), *netencode-filter*(1), *json-to-netencode*(1)

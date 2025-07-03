@@ -92,20 +92,20 @@ echo '<5:false|u,' | netencode-plain
 Use in pipelines to extract field values:
 
 ```
-echo '{33:<4:name|t5:Alice,<3:age|n:30,}' | record-get name | netencode-plain
+echo '{33:<4:name|t5:Alice,<3:age|n:30,}' | netencode-record-get name | netencode-plain
 # Output: Alice
 ```
 
 Process lists of values:
 
 ```
-cat users.netencode | record-get email | netencode-plain > emails.txt
+cat users.netencode | netencode-record-get email | netencode-plain > emails.txt
 ```
 
 Chain with shell tools:
 
 ```
-cat config.netencode | record-get port | netencode-plain | xargs netstat -ln | grep
+cat config.netencode | netencode-record-get port | netencode-plain | xargs netstat -ln | grep :
 ```
 
 # NOTES
@@ -117,4 +117,4 @@ cat config.netencode | record-get port | netencode-plain | xargs netstat -ln | g
 
 # SEE ALSO
 
-*netencode*(5), *record-get*(1), *netencode-pretty*(1), *netencode-filter*(1)
+*netencode*(5), *netencode-record-get*(1), *netencode-pretty*(1), *netencode-filter*(1), *netencode-mustache*(1), *json-to-netencode*(1), *env-to-netencode*(1)

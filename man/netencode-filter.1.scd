@@ -19,7 +19,7 @@ Non-record values pass through unchanged. Invalid netencode is silently skipped.
 
 # OPTIONS
 
-*field=value*
+_field=value_
 	Filter expression specifying the field name and required value. The field 
 	must exist in the record and match the value exactly.
 
@@ -85,7 +85,7 @@ Chain with other tools:
 ```
 json-to-netencode < api-data.json | 
   netencode-filter status=published |
-  record-get title |
+  netencode-record-get title |
   netencode-plain
 ```
 
@@ -108,4 +108,4 @@ tail -f application.log |
 
 # SEE ALSO
 
-*netencode*(5), *record-get*(1), *json-to-netencode*(1), *netencode-pretty*(1)
+*netencode*(5), *netencode-record-get*(1), *json-to-netencode*(1), *netencode-pretty*(1), *netencode-plain*(1), *netencode-mustache*(1), *env-to-netencode*(1)

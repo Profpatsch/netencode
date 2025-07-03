@@ -207,7 +207,7 @@ b3:abc,
 
 # SEE ALSO
 
-*netencode-pretty*(1), *record-get*(1), *record-splice-env*(1), 
-*env-splice-record*(1), *netencode-mustache*(1), *json-to-netencode*(1)
+*netencode-pretty*(1), *netencode-record-get*(1), *netencode-to-env*(1), 
+*env-to-netencode*(1), *netencode-mustache*(1), *json-to-netencode*(1)
 
-Project homepage: https://github.com/openlab-aux/netencode
+Project homepage: https://github.com/Profpatsch/netencode

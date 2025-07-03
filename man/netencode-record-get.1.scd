@@ -19,7 +19,7 @@ allowing you to extract specific values from records without manual parsing.
 
 # OPTIONS
 
-*field*
+_field_
 	The name of the field to extract from the record. Must be valid UTF-8.
 
 # INPUT
@@ -78,4 +78,4 @@ The tool will exit with an error message if:
 
 # SEE ALSO
 
-*netencode*(5), *netencode-plain*(1), *netencode-to-env*(1), *env-to-netencode*(1)
+*netencode*(5), *netencode-plain*(1), *netencode-to-env*(1), *env-to-netencode*(1), *netencode-filter*(1), *netencode-mustache*(1)

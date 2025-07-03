@@ -63,4 +63,4 @@ some-data-source | tee >(netencode-pretty >&2) | next-step
 
 # SEE ALSO
 
-*netencode*(5), *record-get*(1), *json-to-netencode*(1)
+*netencode*(5), *netencode-record-get*(1), *json-to-netencode*(1), *netencode-filter*(1), *netencode-plain*(1), *netencode-mustache*(1)
