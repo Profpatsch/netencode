@@ -49,6 +49,44 @@ echo '{"name": "Alice", "age": 30, "active": true}' | json-to-netencode | netenc
 - [ ] Performance benchmarks vs other formats
 - [ ] Error message clarity improvements
 
+## Rust Implementation TODOs
+
+### Type System Improvements
+**Date**: 2025-01-04  
+**Files**: `lib-rust/src/netencode.rs`  
+**TODOs Found**: 12 total
+
+**API Design Issues**:
+- Lines 19, 24, 27, 167: Convert `String` fields to `&str` for zero-copy parsing
+- Lines 21, 25, 850: Rename `Binary` → `Bytes`, `Sum` → `Tag` for clarity  
+- Line 894: Rename `Record` type description from "map of Ts" to "map"
+- Line 131: Rename type parameter in Tag struct
+
+**Performance Issues**:
+- Line 112: `T::from_u()` conversion inefficient, avoid U→T roundtrip
+- Line 128: U-recursion prevents breadth-lazy evaluation
+
+**Code Organization**:
+- Line 319: Move decoder code to separate module
+
+### Execution Helpers Performance
+**Date**: 2025-01-04  
+**File**: `lib-rust/exec-helpers/exec_helpers.rs`  
+**Lines**: 68, 75
+
+**Issue**: Unnecessary Vec collection for iterator processing  
+**Impact**: Memory overhead when processing command arguments and environment  
+**Complexity**: Medium - requires careful lifetime management
+
+### Pretty Printer Issues  
+**Date**: 2025-01-04  
+**File**: `lib-rust/pretty.rs`  
+**Lines**: 161, 171
+
+**Issue**: Length information lost during U→Pretty conversion  
+**Impact**: Pretty printer can't show original encoded lengths  
+**Decision Needed**: Whether to recompute or preserve original lengths
+
 ## Development Experience Improvements
 
 ### Language-Specific REPL Integration
