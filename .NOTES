@@ -51,9 +51,14 @@ echo '{"name": "Alice", "age": 30, "active": true}' | json-to-netencode | netenc
 
 ## Development Experience Improvements
 
-### Python REPL Integration
+### Language-Specific REPL Integration
 **Date**: 2025-01-04  
-**Suggestion**: Add a dedicated flake app or development shell for Python with ipython  
-**Goal**: Users should be able to run `nix run .#python` and get ipython with netencode pre-imported  
-**Current**: Users need to manually set PYTHONPATH and import netencode  
-**Benefits**: Better Quick Start experience, encourages experimentation
+**Suggestion**: Add dedicated flake apps for all supported language REPLs with netencode pre-imported  
+**Goals**: 
+- `nix run .#python` → ipython with netencode pre-imported
+- `nix run .#haskell` → ghci with Netencode module loaded
+- `nix run .#rust` → evcxr (Rust REPL) with netencode crate available
+- `nix run .#nix` → nix repl with netencode generators in scope
+
+**Current**: Users need to manually set up environments and import libraries  
+**Benefits**: Instant experimentation, better Quick Start experience, language-specific demos

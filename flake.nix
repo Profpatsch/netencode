@@ -27,6 +27,25 @@
             type = "app";
             program = "${netencode-packages.netencode}/bin/netencode-pretty";
           };
+          python = {
+            type = "app";
+            program = let
+              pythonWithNetencode = pkgs.python3.withPackages (ps: [
+                ps.ipython
+              ]);
+              startupScript = pkgs.writeText "netencode_startup.py" ''
+                import sys
+                sys.path.insert(0, '${self}/lib-python')
+                import netencode as ne
+                print("🐍 Python REPL with netencode pre-imported as 'ne'")
+                print("Try: ne.text('hello'), ne.record([('key', ne.text('value'))])")
+              '';
+              pythonScript = pkgs.writeShellScript "netencode-python" ''
+                export PYTHONSTARTUP="${startupScript}"
+                exec ${pythonWithNetencode}/bin/ipython
+              '';
+            in "${pythonScript}";
+          };
         };
 
         devShells.default = import ./shell.nix { inherit pkgs; };

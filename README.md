@@ -82,10 +82,13 @@ Multi-line output:
 
 ### Create Data Programmatically (1.5 minutes)
 
-Python example - create a user record (in a Python environment with netencode installed):
-```python
-import netencode as ne
+Start Python REPL with netencode pre-imported:
+```bash
+nix run github:Profpatsch/netencode#python
+```
 
+Create a user record:
+```python
 user = ne.record([
     ("name", ne.text("Alice")),
     ("age", ne.integer(30)),
