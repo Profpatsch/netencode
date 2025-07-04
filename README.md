@@ -2,6 +2,124 @@
 
 [bencode][] and [netstring][]-inspired pipe format that is trivial to generate correctly in every context (only requires a `byte_length()` and a `printf()`), easy to parse (100 lines of code or less), mostly human-decipherable for easy debugging, and supports nested record and sum types.
 
+## Getting Started in 5 Minutes
+
+### Installation (30 seconds)
+
+```bash
+# Using Nix Flakes (recommended)
+nix shell github:Profpatsch/netencode
+
+# Or clone and use locally
+git clone https://github.com/Profpatsch/netencode
+cd netencode
+nix shell  # Enter shell with netencode tools
+
+# View documentation for any tool
+man netencode           # Format specification
+man netencode-pretty    # Pretty printer
+man json-to-netencode   # JSON converter
+```
+
+### Hello Netencode! (1 minute)
+
+Your first netencode - convert from JSON:
+```bash
+echo '{"message": "Hello, World!"}' | json-to-netencode
+```
+Output: `{29:<7:message|t13:Hello, World!,}`
+
+See it pretty-printed with a more complex example:
+```bash
+echo '{"name": "Alice", "age": 30, "active": true}' | json-to-netencode | netencode-pretty
+```
+Multi-line output:
+```
+  {
+    < active |< true |u ,
+    < age |i 30,
+    < name |t Alice,
+  }
+```
+
+Extract a field:
+```bash
+echo '{"name": "Alice", "age": 30, "active": true}' | json-to-netencode | netencode-record-get name | netencode-plain
+```
+Output: `Alice`
+
+### Basic Operations (2 minutes)
+
+Create a user record:
+```bash
+echo '{"name": "Alice", "age": 30, "active": true}' | json-to-netencode
+```
+Output: `{49:<6:active|<4:true|u,<3:age|i:30,<4:name|t5:Alice,}`
+
+Extract fields:
+```bash
+echo '{"name": "Alice", "age": 30}' | json-to-netencode | netencode-record-get name | netencode-plain
+```
+Output: `Alice`
+
+Filter records (create test data):
+```bash
+echo '{"name": "Alice", "active": true}' | json-to-netencode > users.ne
+echo '{"name": "Bob", "active": false}' | json-to-netencode >> users.ne
+```
+
+Filter active users:
+```bash
+cat users.ne | netencode-filter active=true | netencode-pretty
+```
+Multi-line output:
+```
+  {
+    < active |< true |u ,
+    < name |t Alice,
+  }
+```
+
+### Create Data Programmatically (1.5 minutes)
+
+Python example - create a user record (in a Python environment with netencode installed):
+```python
+import netencode as ne
+
+user = ne.record([
+    ("name", ne.text("Alice")),
+    ("age", ne.integer(30)),
+    ("active", ne.boolean(True))
+])
+print(user)
+```
+Output: `b'{49:<4:name|t5:Alice,<3:age|i:30,<6:active|<4:true|u,}'`
+
+Create nested structure:
+```python
+config = ne.record([
+    ("database", ne.record([
+        ("host", ne.text("localhost")),
+        ("port", ne.integer(5432))
+    ])),
+    ("debug", ne.boolean(False))
+])
+```
+
+## Format at a Glance
+
+| Type | Example | Description |
+|------|---------|-------------|
+| Unit | `u,` | Empty value |
+| Natural | `n:42,` | Unsigned 64-bit |
+| Integer | `i:-42,` | Signed 64-bit |
+| Boolean | `<4:true\|u,` or `<5:false\|u,` | Tagged unit |
+| Text | `t5:hello,` | UTF-8 string |
+| Binary | `b3:xyz,` | Raw bytes |
+| Tag | `<3:foo\|t5:value,` | Sum type |
+| Record | `{15:<3:key\|t5:value,}` | Key-value map |
+| List | `[14:t5:hello,i:42,]` | Ordered values |
+
 ## Quick Start: Pipeline-Friendly Data Processing
 
 Netencode excels at **human-readable data pipelines**. Unlike binary formats, you can debug your data streams by simply looking at them.

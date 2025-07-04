@@ -1,0 +1,59 @@
+# Development Notes
+
+This file tracks observations, potential issues, and areas for improvement discovered during development.
+
+## Pretty Printer Issues
+
+### Leading Empty Line in Multi-field Records
+**Date**: 2025-01-04  
+**Issue**: `netencode-pretty` outputs a leading empty line when formatting multi-field records  
+**Example**:
+```bash
+echo '{"name": "Alice", "age": 30, "active": true}' | json-to-netencode | netencode-pretty
+```
+**Output**:
+```
+
+  {
+    < active |< true |u ,
+    < age |i 30,
+    < name |t Alice,
+  }
+```
+**Status**: Observed, unclear if bug or intentional formatting  
+**Impact**: Low - doesn't affect functionality, just visual formatting  
+
+## Field Ordering
+
+### Python vs JSON-to-netencode Field Order
+**Date**: 2025-01-04  
+**Observation**: Python `netencode.record()` orders fields alphabetically, while `json-to-netencode` preserves JSON key order  
+**Example**: 
+- Python: `{49:<4:name|t5:Alice,<3:age|i:30,<6:active|<4:true|u,}`
+- JSON: `{49:<6:active|<4:true|u,<3:age|i:30,<4:name|t5:Alice,}`
+**Status**: Expected behavior (different ordering strategies)  
+**Impact**: Documentation must show correct expected outputs for each method
+
+## Testing Infrastructure
+
+### Test Data Generation
+**Date**: 2025-01-04  
+**Best Practice**: Always use `json-to-netencode` for generating test data rather than hand-crafting netencode format  
+**Reason**: Ensures correct length prefixes and format compliance  
+**Reference**: Fixed netencode-filter tests by using proper generation
+
+## Areas for Future Investigation
+
+- [ ] Pretty printer leading empty line behavior
+- [ ] Standardize field ordering across implementations
+- [ ] Performance benchmarks vs other formats
+- [ ] Error message clarity improvements
+
+## Development Experience Improvements
+
+### Python REPL Integration
+**Date**: 2025-01-04  
+**Suggestion**: Add a dedicated flake app or development shell for Python with ipython  
+**Goal**: Users should be able to run `nix run .#python` and get ipython with netencode pre-imported  
+**Current**: Users need to manually set PYTHONPATH and import netencode  
+**Benefits**: Better Quick Start experience, encourages experimentation

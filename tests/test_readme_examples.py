@@ -255,3 +255,108 @@ class TestReadmeExamples:
         archived_status = run_tool('netencode-record-get', 'archived', stdin=netencode_repo).stdout.strip()
         assert archived_status == b'<5:false|u,'
     
+    def test_hello_netencode_json_conversion(self):
+        """Test the Hello World JSON to netencode conversion."""
+        json_data = '{"message": "Hello, World!"}'
+        
+        result = run_tool('json-to-netencode', stdin=json_data)
+        assert result.returncode == 0
+        assert result.stdout.strip() == b'{29:<7:message|t13:Hello, World!,}'
+    
+    def test_hello_netencode_pretty_print(self):
+        """Test pretty printing the complex example from Hello Netencode section."""
+        json_data = '{"name": "Alice", "age": 30, "active": true}'
+        
+        # Convert and pretty print
+        netencode_result = run_tool('json-to-netencode', stdin=json_data)
+        pretty_result = run_tool('netencode-pretty', stdin=netencode_result.stdout)
+        
+        assert pretty_result.returncode == 0
+        assert b'Alice' in pretty_result.stdout
+        assert b'active' in pretty_result.stdout
+        assert b'age' in pretty_result.stdout
+    
+    def test_hello_netencode_full_pipeline(self):
+        """Test the complete field extraction pipeline from Hello Netencode section."""
+        json_data = '{"name": "Alice", "age": 30, "active": true}'
+        
+        # Full pipeline: JSON -> netencode -> record-get -> plain
+        netencode_result = run_tool('json-to-netencode', stdin=json_data)
+        get_result = run_tool('netencode-record-get', 'name', stdin=netencode_result.stdout)
+        plain_result = run_tool('netencode-plain', stdin=get_result.stdout)
+        
+        assert plain_result.returncode == 0
+        assert plain_result.stdout == b'Alice'
+    
+    def test_basic_user_record_creation(self):
+        """Test creating a user record from JSON."""
+        json_data = '{"name": "Alice", "age": 30, "active": true}'
+        
+        result = run_tool('json-to-netencode', stdin=json_data)
+        assert result.returncode == 0
+        assert result.stdout.strip() == b'{49:<6:active|<4:true|u,<3:age|i:30,<4:name|t5:Alice,}'
+    
+    def test_basic_field_extraction(self):
+        """Test extracting name field from user record."""
+        json_data = '{"name": "Alice", "age": 30}'
+        
+        # Convert to netencode and extract name
+        netencode_result = run_tool('json-to-netencode', stdin=json_data)
+        get_result = run_tool('netencode-record-get', 'name', stdin=netencode_result.stdout)
+        plain_result = run_tool('netencode-plain', stdin=get_result.stdout)
+        
+        assert plain_result.returncode == 0
+        assert plain_result.stdout == b'Alice'
+    
+    def test_filter_multiple_records(self):
+        """Test filtering multiple user records."""
+        # Create test data
+        alice = '{"name": "Alice", "active": true}'
+        bob = '{"name": "Bob", "active": false}'
+        
+        # Convert both to netencode
+        alice_ne = run_tool('json-to-netencode', stdin=alice).stdout
+        bob_ne = run_tool('json-to-netencode', stdin=bob).stdout
+        
+        # Combine records
+        combined = alice_ne + bob_ne
+        
+        # Filter active users
+        filter_result = run_tool('netencode-filter', 'active=true', stdin=combined)
+        
+        assert filter_result.returncode == 0
+        assert b'Alice' in filter_result.stdout
+        assert b'Bob' not in filter_result.stdout
+    
+    def test_python_user_record_creation(self):
+        """Test the Python example for creating a user record."""
+        # This tests that the Python code shown in the README actually works
+        import netencode as ne
+        
+        user = ne.record([
+            ("name", ne.text("Alice")),
+            ("age", ne.integer(30)),
+            ("active", ne.boolean(True))
+        ])
+        
+        assert user == b'{49:<4:name|t5:Alice,<3:age|i:30,<6:active|<4:true|u,}'
+    
+    def test_python_nested_structure(self):
+        """Test the Python example for creating nested structures."""
+        import netencode as ne
+        
+        config = ne.record([
+            ("database", ne.record([
+                ("host", ne.text("localhost")),
+                ("port", ne.integer(5432))
+            ])),
+            ("debug", ne.boolean(False))
+        ])
+        
+        # Verify it creates valid netencode
+        assert config.startswith(b'{')
+        assert b'database' in config
+        assert b'localhost' in config
+        assert b'5432' in config
+        assert b'<5:false|u,' in config
+    
