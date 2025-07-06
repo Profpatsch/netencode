@@ -206,8 +206,8 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ### Commit Guidelines
-- Wrap commit line lengths at around 70 characters
-- For commit messages, make the first line less than 70 characters long
+- **CRITICAL: First line must be under 70 characters** (this is frequently forgotten!)
+- Wrap all commit message lines at around 70 characters
 - Use explanatory paragraph text, not bullet point lists
 - Use language that is easy to understand, avoid flowery descriptions
 - **Always explain WHY changes were made, not just what was changed**

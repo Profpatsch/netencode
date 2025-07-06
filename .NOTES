@@ -90,9 +90,3 @@ echo '{"name": "Alice", "age": 30, "active": true}' | json-to-netencode | netenc
 ## Development Experience Improvements
 
 
-### Interactive apps architecture
-* TODO: move interactive apps from flake.nix to default.nix
-  * Makes them available to old-style nix commands (nix-build -A rust-workspace)
-  * Centralizes complex build logic in default.nix
-  * Flake.nix should just reference derivations from default.nix
-  * Pattern: build in default.nix, reference in flake.nix
