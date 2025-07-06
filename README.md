@@ -109,6 +109,32 @@ config = ne.record([
 ])
 ```
 
+## Language REPLs
+
+Try netencode in your favorite language with pre-configured REPLs:
+
+**Python (with ipython)**:
+```bash
+nix run github:Profpatsch/netencode#python
+```
+
+**Haskell (with ghci)**:
+```bash
+nix run github:Profpatsch/netencode#haskell
+```
+
+**Rust (code examples)**:
+```bash
+nix run github:Profpatsch/netencode#rust
+```
+
+**Nix (with nix repl)**:
+```bash
+nix run github:Profpatsch/netencode#nix
+```
+
+Each environment comes with netencode pre-imported and helpful examples to get you started! The Rust app shows comprehensive code examples and usage patterns for integrating netencode into your projects.
+
 ## Format at a Glance
 
 | Type | Example | Description |

@@ -89,14 +89,10 @@ echo '{"name": "Alice", "age": 30, "active": true}' | json-to-netencode | netenc
 
 ## Development Experience Improvements
 
-### Language-Specific REPL Integration
-**Date**: 2025-01-04  
-**Suggestion**: Add dedicated flake apps for all supported language REPLs with netencode pre-imported  
-**Goals**: 
-- `nix run .#python` → ipython with netencode pre-imported
-- `nix run .#haskell` → ghci with Netencode module loaded
-- `nix run .#rust` → evcxr (Rust REPL) with netencode crate available
-- `nix run .#nix` → nix repl with netencode generators in scope
 
-**Current**: Users need to manually set up environments and import libraries  
-**Benefits**: Instant experimentation, better Quick Start experience, language-specific demos
+### Interactive apps architecture
+* TODO: move interactive apps from flake.nix to default.nix
+  * Makes them available to old-style nix commands (nix-build -A rust-workspace)
+  * Centralizes complex build logic in default.nix
+  * Flake.nix should just reference derivations from default.nix
+  * Pattern: build in default.nix, reference in flake.nix

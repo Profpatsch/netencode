@@ -1,0 +1,25 @@
+[package]
+name = "netencode-playground"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "netencode"
+path = "src/netencode.rs"
+
+[dependencies]
+nom = "5.1"
+indexmap = "1.9"
+exec_helpers = { path = "exec-helpers" }
+
+[[example]]
+name = "basic"
+path = "examples/basic.rs"
+
+[[example]]
+name = "advanced"
+path = "examples/advanced.rs"
+
+[[example]]
+name = "playground"
+path = "examples/playground.rs"

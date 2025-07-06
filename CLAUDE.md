@@ -240,6 +240,18 @@ concrete examples and relegated nix-shell to network tests only.
 ```
 
 
+## Task Management
+
+### .NOTES File
+The repository contains a `.NOTES` file for documenting TODOs and future work items. This file should be:
+- Used to track ongoing tasks and future improvements
+- Document side-tasks and observations discovered during unrelated work
+- Committed along with other changes to maintain task history
+- Regularly reviewed to remove completed items and add new ones
+- Updated when tasks are finished to avoid stale references
+
+This provides a lightweight way to track development tasks and tangential observations outside of formal issue tracking systems.
+
 ## Known Issues / Workarounds
 
 ### Bash Tool File Redirection Bug

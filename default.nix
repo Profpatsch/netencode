@@ -37,6 +37,7 @@ let
       ./lib-haskell/netencode.cabal
       ./lib-haskell/Netencode.hs
       ./lib-haskell/Netencode/Parse.hs
+      ./lib-haskell/test/GeneratorSpec.hs
     ];
 
     libraryHaskellDepends = [
