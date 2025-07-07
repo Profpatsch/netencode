@@ -4,24 +4,12 @@ This file tracks observations, potential issues, and areas for improvement disco
 
 ## Pretty Printer Issues
 
-### Leading Empty Line in Multi-field Records
+### Leading Empty Line in Multi-field Records  
 **Date**: 2025-01-04  
 **Issue**: `netencode-pretty` outputs a leading empty line when formatting multi-field records  
-**Example**:
-```bash
-echo '{"name": "Alice", "age": 30, "active": true}' | json-to-netencode | netencode-pretty
-```
-**Output**:
-```
-
-  {
-    < active |< true |u ,
-    < age |i 30,
-    < name |t Alice,
-  }
-```
-**Status**: Observed, unclear if bug or intentional formatting  
-**Impact**: Low - doesn't affect functionality, just visual formatting  
+**Status**: ✅ **FIXED** - 2025-01-07  
+**Fix**: Modified `lib-rust/pretty.rs` line 265 to remove leading newline in multi-line formatting  
+**Impact**: Pretty printer now correctly formats multi-field records, nested records, and lists without unwanted leading empty lines  
 
 ## Field Ordering
 
@@ -44,7 +32,7 @@ echo '{"name": "Alice", "age": 30, "active": true}' | json-to-netencode | netenc
 
 ## Areas for Future Investigation
 
-- [ ] Pretty printer leading empty line behavior
+- [x] ~~Pretty printer leading empty line behavior~~ (Fixed 2025-01-07)
 - [ ] Standardize field ordering across implementations
 - [ ] Performance benchmarks vs other formats
 - [ ] Error message clarity improvements

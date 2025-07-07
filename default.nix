@@ -451,6 +451,7 @@ let
       ./tests/test_readme_examples.py
       ./tests/test_manpage_examples.py
       ./tests/test_netencode_py.py
+      ./tests/test_pretty_printer.py
       ./tests/test_network.py
       ./tests/GENERATOR_TEST_SPEC.md
       ./tests/conftest.py
@@ -506,7 +507,10 @@ let
       if [ -n "${testFiles}" ]; then
         TEST_FILES="${testFiles}"
       else
-        TEST_FILES="test_integration.py test_readme_examples.py test_manpage_examples.py test_netencode_py.py"
+        # Use glob to include all test files except network tests (which require internet)
+        TEST_FILES="test_*.py"
+        # Exclude network tests from default run
+        TEST_FILES="--ignore=test_network.py test_*.py"
       fi
 
       # Determine pytest arguments

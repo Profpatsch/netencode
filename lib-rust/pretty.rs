@@ -262,7 +262,7 @@ impl Pretty {
                     write!(&mut w, "{}", trailer)
                 }
                 more => {
-                    write!(&mut w, "\n{}{}\n", iandhalf, r#type)?;
+                    write!(&mut w, "{}\n", r#type)?;
                     for v in vals {
                         Self::go::<W>(&mut w, v, depth + 1, true)?;
                         write!(&mut w, "\n")?;

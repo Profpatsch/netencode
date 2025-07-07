@@ -482,7 +482,7 @@ class TestPrettyPrinterCompleteFormat:
             age=ne.natural(30)
         )
         result = run_tool('netencode-pretty', stdin=multi_record)
-        expected = """  {
+        expected = """{
     < age |n 30,
     < name |t Alice,
   }"""
@@ -495,7 +495,7 @@ class TestPrettyPrinterCompleteFormat:
             active=ne.boolean(True)
         )
         result = run_tool('netencode-pretty', stdin=three_field_record)
-        expected = """  {
+        expected = """{
     < active |< true |u ,
     < age |n 30,
     < name |t Alice,
@@ -521,7 +521,7 @@ class TestPrettyPrinterCompleteFormat:
             ne.boolean(True)
         ])
         result = run_tool('netencode-pretty', stdin=multi_list)
-        expected = """  [
+        expected = """[
     t first,
     n 42,
     < true |u ,
@@ -536,10 +536,9 @@ class TestPrettyPrinterCompleteFormat:
             scores=ne.list([ne.natural(95), ne.natural(87)])
         )
         result = run_tool('netencode-pretty', stdin=record_with_list)
-        expected = """  {
+        expected = """{
     < name |t Alice,
-    < scores |
-      [
+    < scores |[
         n 95,
         n 87,
       ]
@@ -552,7 +551,7 @@ class TestPrettyPrinterCompleteFormat:
             ne.simple_record(name=ne.text("Bob"))
         ])
         result = run_tool('netencode-pretty', stdin=list_with_records)
-        expected = """  [
+        expected = """[
     { < name |t Alice,}
     { < name |t Bob,}
   ]"""
@@ -568,11 +567,10 @@ class TestPrettyPrinterCompleteFormat:
             list_field=ne.list([ne.text("item1"), ne.text("item2")])
         )
         result = run_tool('netencode-pretty', stdin=mixed_record)
-        expected = """  {
+        expected = """{
     < binary_field |b3 fffe00,
     < bool_field |< true |u ,
-    < list_field |
-      [
+    < list_field |[
         t item1,
         t item2,
       ]
@@ -595,15 +593,13 @@ class TestPrettyPrinterCompleteFormat:
             )
         )
         result = run_tool('netencode-pretty', stdin=user_profile)
-        expected = """  {
+        expected = """{
     < active |< true |u ,
     < email |t alice@example.com,
     < id |n 12345,
-    < metadata |
-      {
+    < metadata |{
         < created |t 2023-01-15,
-        < tags |
-          [
+        < tags |[
             t admin,
             t premium,
           ]
