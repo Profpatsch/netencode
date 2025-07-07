@@ -12,23 +12,12 @@ This is **netencode**, a data serialization format and library implementation. I
 - Length-prefixed variable data for efficient parsing
 - ASCII prefixes make format partially human-readable
 
-## Architecture
-
 ### Multi-language Implementation
-- **Haskell** (`lib-haskell/Netencode.hs`, `lib-haskell/Netencode/Parse.hs`): Type-safe implementation with strong ADTs
-- **Rust** (`lib-rust/netencode.rs`, `pretty.rs`): Performance-oriented with both owned (`T`) and borrowed (`U`) representations
-- **Python** (`lib-python/netencode.py`): Generator library with standardized API for netencode construction
-- **Nix** (`lib-nix/gen.nix`): Generator functions with unified API
+- **Haskell** (`lib-haskell/`): Type-safe implementation with strong ADTs
+- **Rust** (`lib-rust/`): Performance-oriented with both owned (`T`) and borrowed (`U`) representations
+- **Python** (`lib-python/`): Generator library with standardized API
+- **Nix** (`lib-nix/`): Generator functions with unified API
 - **Nix**: Primary build system orchestrating all language implementations
-
-### Core Components
-- `lib-haskell/Netencode.hs`: Main Haskell library with `TF` functor and `Fix` recursion
-- `lib-rust/netencode.rs`: Rust library with nom-based streaming parser
-- `lib-python/netencode.py`: Python generator library with unified API
-- `lib-nix/gen.nix`: Nix generator functions with standardized interface
-- `exec-helpers/`: Rust utilities for command-line tools
-- `arglib/`: Argument parsing library
-- `third-party/my-prelude/`: Vendored Haskell utility library
 
 ### CLI Tools (built by Nix)
 - `netencode-pretty`: Format pretty-printer
@@ -40,224 +29,160 @@ This is **netencode**, a data serialization format and library implementation. I
 - `json-to-netencode`: Convert JSON to netencode format
 - `netencode-mustache`: Template rendering
 
-## Development Commands
+## Specialist Agent System
 
-### Testing (75 tests total: 73 offline + 2 network)
+**IMPORTANT**: For specialized tasks, delegate to expert agents in the `.claude/` directory:
 
-DON’T `cd` INTO INTO `tests/`!
+### Agent Dispatch Rules
 
-#### Automated Testing (Nix Build - 73 offline tests)
+**Git Operations** → **ALWAYS delegate to `.claude/CLAUDE-git.md`**
+- Creating any git commit
+- Analyzing git history
+- Commit message formatting
+- Git workflow questions
 
+**Testing Workflows** → **Delegate to `.claude/CLAUDE-test.md`**
+- Running complex test suites
+- Creating custom test scripts
+- Test data generation
+- Cross-language test coordination
+
+**Build System Issues** → **Delegate to `.claude/CLAUDE-build.md`**
+- Multi-language build coordination
+- Build system configuration
+- Dependency management
+- Development environment setup
+
+**Documentation Updates** → **Delegate to `.claude/CLAUDE-docs.md`**
+- README maintenance
+- API documentation synchronization
+- Example validation
+- Cross-language documentation consistency
+
+**Debugging & Troubleshooting** → **Delegate to `.claude/CLAUDE-debug.md`**
+- Build failures
+- Runtime errors
+- Performance issues
+- Cross-language compatibility problems
+
+### Agent Invocation Pattern
+```
+Use the Task tool to spawn specialist agent:
+"[Task description]. Follow the specialized guidance in .claude/CLAUDE-[agent].md."
+```
+
+**Example**:
+```
+Task: "Create a git commit for the new feature. Follow the commit message format and guidelines in .claude/CLAUDE-git.md."
+```
+
+## Quick Development Commands
+
+### Essential Commands
 ```bash
-# Run all offline tests automatically in nix-build (recommended)
+# Run all tests
 nix-build -A netencode-tests
 
-# Run specific test file
-nix-build -A netencode-tests --arg testFiles '"test_integration.py"'
-
-# Run tests matching a pattern
-nix-build -A netencode-tests --arg pytestArgs '"-k json_to_netencode"'
-
-# Run with verbose output
-nix-build -A netencode-tests --arg pytestArgs '"-v"'
-
-# Combine options: specific file with verbose output
-nix-build -A netencode-tests --arg testFiles '"test_integration.py"' --arg pytestArgs '"-v"'
-```
-
-#### Ad-hoc Custom Testing
-
-```bash
-# Run custom commands with access to all netencode tools
-nix-build -A netencode-tests --arg customTest ./.claude-test
-
-# Example custom test script (./.claude-test):
-echo "Testing specific functionality..."
-echo '"hello"' | json-to-netencode | netencode-pretty
-echo "Custom test completed"
-
-# Use Write tool to create ./.claude-test, then run nix-build with the arg
-
-#### Manual Testing (Network Tests Only)
-
-```bash
-# Enter test environment for network tests
-nix-shell tests/shell.nix --run "<test-command>"
-
-# Run network tests only (requires internet)
-pytest -q --tb=short test_network.py          # 2 network tests
-
-# Run all tests including network tests (requires internet)
-pytest -q --tb=short
-
-# Run with verbose output for debugging
-pytest -v test_network.py
-```
-
-#### Test Structure
-
-- **test_integration.py**: 36 CLI tool integration tests (offline)
-- **test_readme_examples.py**: 15 documentation example tests (offline) 
-- **test_netencode_py.py**: 22 Python module unit tests (offline)
-- **test_network.py**: 2 tests requiring network connectivity (GitHub API, nix flake)
-
-The offline tests (73 total) run automatically in nix-build without network access. Network tests are available for manual verification when internet connectivity is available.
-
-### Build Systems
-
-#### Nix (Primary)
-```bash
-# Build all components
+# Build everything
 nix-build
 
-# Build specific components
-nix-build -A netencode-hs      # Haskell library
-nix-build -A netencode-rs      # Rust library
-nix-build -A pretty            # Pretty-printer
-nix-build -A netencode-mustache # Template tool
-```
-
-#### Nix Flake
-```bash
-# Build using flake
-nix build
-
-# Run tools via flake
-nix run .#netencode-pretty
-nix run .  # Default app (netencode-pretty)
-
-# Enter development shell
+# Development shell
 nix develop
+
+# Run tools
+nix run .#netencode-pretty
+nix run .#python    # Python REPL
+nix run .#rust      # Rust workspace creator
 ```
 
-#### Cabal (Alternative)
-```bash
-# Build all packages
-cabal build all
+### Testing (75 tests: 73 offline + 2 network)
+**For complex testing workflows, delegate to `.claude/CLAUDE-test.md`**
 
-# Build specific components
-cabal build netencode          # Main library
-cabal build arglib-netencode   # Argument parsing
-cabal build exec-helpers       # Utilities
+```bash
+# Basic test commands
+nix-build -A netencode-tests
+nix-build -A netencode-tests --arg pytestArgs '"-v"'
 ```
 
-#### Rust Components
+### Build Systems
+**For complex build issues, delegate to `.claude/CLAUDE-build.md`**
+
 ```bash
-# In exec-helpers/ directory
-cargo build
+# Primary build system (Nix)
+nix-build                    # Build all
+nix-build -A netencode-hs    # Haskell library
+nix-build -A netencode-rs    # Rust library
+
+# Alternative builds
+cabal build all              # Haskell
+cargo build                  # Rust (in lib-rust/)
 ```
 
 ## Project Structure
 
-- **Language-organized directories**: `lib-haskell/`, `lib-rust/`, `lib-python/`, `lib-nix/`
-- **Unified API**: Standardized function names across all generator libraries
-- Multi-package Cabal project (`cabal.project`)
-- Haskell IDE configuration in `hie.yaml`
-- Nix helpers in `nix-lib/` for custom build utilities
-- Automated test suite with nix-build integration
-- Cross-language compatibility with consistent APIs
-- Nix flake for reproducible builds and development environments
-
-## Key Implementation Details
-
-### Haskell
-- Uses Fix-based recursion with TF functor
-- Attoparsec for parsing with proper error handling
-- Hedgehog property-based testing for roundtrip verification
-- Stable encoding with sorted record keys
-
-### Rust
-- Nom-based incremental parsing
-- Zero-copy parsing support with borrowed types
-- Composable decoder framework for type-safe extraction
-- Integration with Unix tooling philosophy
-
-### Python
-- Generator library with standardized API (`lib-python/netencode.py`)
-- Unified function names: `unit()`, `natural()`, `integer()`, `boolean()`, `text()`, `binary()`, `tag()`, `record()`, `list()`
-- Direct binary format generation without intermediate representations
-- Convenience functions for common patterns (`simple_record()`, `record_ordered()`)
-
-### API Standardization
-- **Unified naming**: All generator libraries use identical function names
-- **Cross-language compatibility**: Same logical operations work identically everywhere
-- **Consistent output**: All languages produce identical netencode for same data
-- **Documentation**: Single API reference covers all language implementations
-
-## Commit Message Format
-
-Use conventional commit format with these conventions:
-- Basic verbs: `feat`, `chore`, `doc`, `refact`
-- Always include scope in parentheses: `(scope)`
-- Add ✨ emoji after scope for AI-generated commits: `doc(meta): ✨ description`
-- Include detailed explanation in commit body
-- End with Claude Code attribution
-
-Example:
 ```
-doc(meta): ✨ add CLAUDE.md for AI assistant guidance
+netencode/
+├── lib-haskell/     # Haskell implementation (type-safe)
+├── lib-rust/        # Rust implementation (performance-oriented)
+├── lib-python/      # Python implementation (generator library)
+├── lib-nix/         # Nix implementation (build integration)
+├── exec-helpers/    # Rust utilities for CLI tools
+├── tests/           # Automated test suite
+├── man/             # Manual pages
+├── .claude/         # Specialist agent configurations
+└── default.nix      # Primary build orchestration
+```
 
-Analyzed codebase structure, build systems (Nix/Cabal/Cargo), and 
-architecture to create comprehensive guidance file for Claude Code.
+### Unified API
+All generator libraries use identical function names:
+- `unit()`, `natural()`, `integer()`, `boolean()`, `text()`, `binary()`
+- `tag()`, `record()`, `list()`
+- Cross-language compatibility ensures identical output
+
+## Git Workflow
+
+**CRITICAL**: All git operations must be delegated to `.claude/CLAUDE-git.md`
+
+### Git Agent Responsibilities
+- **70-character limit** enforcement (frequently forgotten!)
+- **Explain WHY** changes were made, not just what
+- Conventional commit format with netencode-specific patterns
+- Consistent git history practices
+
+### Quick Reference
+```
+feat(scope): ✨ description under 70 characters
+
+Explanation of WHY changes were made, focusing on reasoning
+and problem context rather than listing what was changed.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
-### Commit Guidelines
-- **CRITICAL: First line must be under 70 characters** (this is frequently forgotten!)
-- Wrap all commit message lines at around 70 characters
-- Use explanatory paragraph text, not bullet point lists
-- Use language that is easy to understand, avoid flowery descriptions
-- **Always explain WHY changes were made, not just what was changed**
-- Include reasoning, motivation, or problem being solved
-- When compacting your history, write a file to docs/ that is called `<date>_<timestamp>_claude-compact.md` and contains the compacted history text
-
-### Good vs Bad Commit Body Examples
-
-**Good (explains WHY with reasoning):**
-```
-Restructured test documentation to guide developers toward nix-build
-custom scripts rather than nix-shell for development work. This change
-reduces confusion about tool choice and aligns with the preferred
-isolated testing approach that avoids environment inconsistencies.
-```
-
-**Bad (only lists WHAT was done):**
-```
-- Reframe 'Manual Testing' as 'Development Testing'
-- Add clear example of nix-build custom test script workflow
-- Relegate nix-shell to 'Network Tests Only' with warning note
-- Remove general pytest commands that encouraged nix-shell usage
-```
-
-**Also Bad (no reasoning WHY):**
-```
-Restructured test documentation to guide developers toward nix-build
-custom scripts rather than nix-shell for development work. Added
-concrete examples and relegated nix-shell to network tests only.
-```
-
+**Always delegate git operations to the specialist agent!**
 
 ## Task Management
 
 ### .NOTES File
-The repository contains a `.NOTES` file for documenting TODOs and future work items. This file should be:
-- Used to track ongoing tasks and future improvements
-- Document side-tasks and observations discovered during unrelated work
-- Committed along with other changes to maintain task history
-- Regularly reviewed to remove completed items and add new ones
-- Updated when tasks are finished to avoid stale references
+The repository contains a `.NOTES` file for documenting TODOs and future work items:
+- Track ongoing tasks and future improvements
+- Document side-tasks discovered during unrelated work
+- Commit along with other changes to maintain task history
+- Remove completed items to avoid stale references
 
-This provides a lightweight way to track development tasks and tangential observations outside of formal issue tracking systems.
+### TodoWrite Tool
+Use the TodoWrite tool for complex multi-step tasks to:
+- Track progress across multiple related changes
+- Break down complex tasks into manageable steps
+- Provide visibility into work progress
+- Ensure no steps are forgotten
 
-## Known Issues / Workarounds
+## Critical Workarounds
 
 ### Bash Tool File Redirection Bug
-**Issue**: The Bash tool has a bug with the `<` character where it incorrectly adds `/dev/null` redirection. Commands like `./tool < file.txt` will fail with "stdin was empty" even when the file exists and has content.
-
-**Bug Report**: https://github.com/anthropics/claude-code/issues/2851
+**Issue**: The Bash tool has a bug with the `<` character where it incorrectly adds `/dev/null` redirection.
 
 **Workaround**: Use pipe redirection instead:
 ```bash
@@ -265,4 +190,26 @@ This provides a lightweight way to track development tasks and tangential observ
 # Use instead: cat file.txt | ./tool
 ```
 
-**For Claude Code**: AVOID suggesting any bash commands that contain the `<` character for file redirection. Always use `cat file |` or `printf ... |` patterns instead. Also, use the Write tool to create `./.claude-test` for temporary testing scripts instead of bash heredocs.
+**For Claude Code**: AVOID suggesting bash commands with `<` character. Always use `cat file |` or `printf ... |` patterns instead.
+
+## Development Workflow
+
+1. **Identify Task Type**: Determine if task needs specialist agent
+2. **Delegate to Agent**: Use Task tool to spawn appropriate specialist
+3. **Use TodoWrite**: For complex multi-step tasks
+4. **Update .NOTES**: Document side-tasks and observations
+5. **Always Use Git Agent**: For any git operations
+
+## Agent Integration Benefits
+
+- **Specialized Expertise**: Each agent focuses on specific domain knowledge
+- **Consistent Practices**: Git agent ensures consistent commit practices
+- **Faster Context**: Agents load only relevant context for their domain
+- **Maintainable**: Easy to update specialist knowledge without affecting others
+- **Reliable**: Reduces errors through specialized validation
+
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
